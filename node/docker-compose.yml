@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  # ---- OCP Node (Transport + Message Router) ----
+  ocp-node:
+    build:
+      context: ..
+      dockerfile: node/Dockerfile
+    container_name: ocp-node
+    command: ["python", "-m", "ocp_node", "--component", "node"]
+    ports:
+      - "8420:8420"   # HTTP transport
+      - "8421:8421"   # WebSocket transport
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+      - node-data:/app/data
+    environment:
+      - OCP_NETWORK=mainnet
+      - OCP_LOG_LEVEL=info
+      - OCP_DATA_DIR=/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8420/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ocp-net
+
+  # ---- Agent Registry ----
+  ocp-registry:
+    build:
+      context: ..
+      dockerfile: node/Dockerfile
+    container_name: ocp-registry
+    command: ["python", "-m", "ocp_node", "--component", "registry"]
+    ports:
+      - "8422:8422"
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+      - registry-data:/app/data
+    environment:
+      - OCP_NETWORK=mainnet
+      - OCP_LOG_LEVEL=info
+      - OCP_DATA_DIR=/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8422/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - ocp-net
+
+  # ---- Recovery Custodian ----
+  ocp-custodian:
+    build:
+      context: ..
+      dockerfile: node/Dockerfile
+    container_name: ocp-custodian
+    command: ["python", "-m", "ocp_node", "--component", "custodian"]
+    ports:
+      - "8423:8423"
+    volumes:
+      - ./config.yml:/app/config.yml:ro
+      - custodian-data:/app/data
+    environment:
+      - OCP_NETWORK=mainnet
+      - OCP_LOG_LEVEL=info
+      - OCP_DATA_DIR=/app/data
+    restart: unless-stopped
+    networks:
+      - ocp-net
+
+volumes:
+  node-data:
+  registry-data:
+  custodian-data:
+
+networks:
+  ocp-net:
+    driver: bridge
+    

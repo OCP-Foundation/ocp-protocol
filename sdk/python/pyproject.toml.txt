@@ -1,0 +1,4823 @@
+================================================================================
+  OCP Python SDK — Complete Source
+  sdk/python/
+================================================================================
+
+
+═══ FILE: sdk/python/pyproject.toml ═══
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ocp-protocol"
+version = "1.0.0"
+description = "Reference Python SDK for the OpenCognition Protocol (OCP)"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+authors = [
+    { name = "OCP Community Working Group" },
+]
+keywords = ["ai", "protocol", "decentralized", "multi-agent", "ocp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: System :: Networking",
+]
+dependencies = [
+    "cryptography>=43.0",
+    "pynacl>=1.5.0",
+    "websockets>=13.0",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "jsonschema>=4.22",
+    "jsoncanon>=0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "mypy>=1.10",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25",
+]
+
+[project.urls]
+Homepage = "https://github.com/opencognitionprotocol/ocp-spec"
+Documentation = "https://opencognitionprotocol.org/docs/sdk/python"
+Repository = "https://github.com/opencognitionprotocol/ocp-spec"
+Issues = "https://github.com/opencognitionprotocol/ocp-spec/issues"
+Changelog = "https://github.com/opencognitionprotocol/ocp-spec/blob/main/spec/CHANGELOG.md"
+
+[project.scripts]
+ocp-keygen = "ocp.cli:keygen"
+ocp-node = "ocp.node:main"
+ocp-compliance = "ocp.compliance:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ocp"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "ANN", "S", "B", "RUF"]
+ignore = ["ANN101", "ANN102", "S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ocp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests requiring network",
+]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.coverage.run]
+source = ["ocp"]
+omit = ["ocp/cli.py", "ocp/node.py"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+
+═══ FILE: sdk/python/README.md ═══
+
+# OCP Python SDK
+
+Reference Python SDK for the **OpenCognition Protocol (OCP)** — an open,
+decentralized standard for AI-to-AI communication.
+
+## Installation
+
+```bash
+pip install ocp-protocol
+```
+
+For development:
+
+```bash
+pip install ocp-protocol[dev]
+```
+
+## Quick Start
+
+```python
+import asyncio
+from ocp import Agent
+
+async def main():
+    agent = Agent(
+        name="MyResearchAI",
+        capabilities=["nlp:classification", "nlp:summarization"],
+        domains=["research"],
+    )
+    await agent.register()
+    peers = await agent.discover(domain="research")
+    print(f"Found {len(peers)} peers")
+    await agent.close()
+
+asyncio.run(main())
+```
+
+## Documentation
+
+Full documentation: https://opencognitionprotocol.org/docs/sdk/python
+
+## License
+
+MIT
+
+
+═══ FILE: sdk/python/ocp/__init__.py ═══
+
+"""OpenCognition Protocol (OCP) — Python SDK.
+
+A reference implementation of the OCP protocol for building AI agents
+that can discover, trust, and collaborate with peer agents across
+organizational and platform boundaries.
+
+Basic usage::
+
+    from ocp import Agent
+
+    agent = Agent(
+        name="MyAI",
+        capabilities=["nlp:classification"],
+        domains=["finance"],
+    )
+    await agent.register()
+    peers = await agent.discover(domain="finance")
+    await agent.share(insight, to=peers[0]["agent_id"])
+"""
+
+__version__ = "1.0.0"
+__ocp_version__ = "1.0"
+__all__ = [
+    # Core
+    "Agent",
+    # Identity
+    "AgentIdentity",
+    "DIDDocument",
+    # Messages
+    "MessageBuilder",
+    "MessageType",
+    "MessageValidator",
+    "Priority",
+    # Knowledge
+    "EmbeddingPackage",
+    "EmbeddingVector",
+    "InsightPackage",
+    "InsightFeature",
+    "ModelDelta",
+    # Trust
+    "Bond",
+    "BondPermissions",
+    "TrustLevel",
+    "TrustScoreWeights",
+    "Vouch",
+    "compute_trust_score",
+    # Recovery
+    "RecoveryManager",
+    "RecoveryShare",
+    "split_secret",
+    "reconstruct_secret",
+    # Transport
+    "WebSocketTransport",
+    "HTTPTransport",
+    "TransportConfig",
+    # Registry
+    "RegistryClient",
+    "RegistryConfig",
+    "AgentRecord",
+    # Privacy
+    "validate_knowledge_payload",
+    "enforce_pvl",
+    "PVLResult",
+    # Consensus
+    "ConsensusConfig",
+    "ConsensusRound",
+    "ConsensusResult",
+    "Vote",
+    # Exceptions
+    "OCPError",
+    "OCPAuthError",
+    "OCPTransportError",
+    "OCPValidationError",
+    "OCPTrustError",
+    "OCPPrivacyViolation",
+    "OCPTimeoutError",
+    "OCPRateLimitError",
+    "OCPAgentNotFoundError",
+]
+
+from ocp.agent import Agent
+from ocp.identity import AgentIdentity, DIDDocument
+from ocp.messages import MessageBuilder, MessageType, MessageValidator, Priority
+from ocp.knowledge import (
+    EmbeddingPackage,
+    EmbeddingVector,
+    InsightPackage,
+    InsightFeature,
+    ModelDelta,
+)
+from ocp.trust import (
+    Bond,
+    BondPermissions,
+    TrustLevel,
+    TrustScoreWeights,
+    Vouch,
+    compute_trust_score,
+)
+from ocp.recovery import RecoveryManager, RecoveryShare, split_secret, reconstruct_secret
+from ocp.transport import WebSocketTransport, HTTPTransport, TransportConfig
+from ocp.registry import RegistryClient, RegistryConfig, AgentRecord
+from ocp.pvl import validate_knowledge_payload, enforce_pvl, PVLResult
+from ocp.consensus import ConsensusConfig, ConsensusRound, ConsensusResult, Vote
+from ocp.exceptions import (
+    OCPError,
+    OCPAuthError,
+    OCPTransportError,
+    OCPValidationError,
+    OCPTrustError,
+    OCPPrivacyViolation,
+    OCPTimeoutError,
+    OCPRateLimitError,
+    OCPAgentNotFoundError,
+)
+
+
+═══ FILE: sdk/python/ocp/constants.py ═══
+
+"""Protocol-level constants defined by the OCP v1.0 specification.
+
+These values are normative. Changing them produces a non-conforming
+implementation unless the spec itself is revised.
+"""
+
+from __future__ import annotations
+
+# --- Protocol version ---
+OCP_VERSION: str = "1.0"
+
+# --- Size limits ---
+MAX_MESSAGE_SIZE: int = 16_777_216       # 16 MB
+MAX_PAYLOAD_SIZE: int = 10_485_760       # 10 MB
+
+# --- Time-to-live ---
+DEFAULT_TTL: int = 3600                  # 1 hour
+MAX_TTL: int = 86_400                    # 24 hours
+
+# --- Timeouts ---
+AUTH_HANDSHAKE_TIMEOUT: float = 5.0      # seconds
+ACK_TIMEOUT: float = 30.0               # seconds
+TASK_DEFAULT_TIMEOUT: int = 300          # seconds
+
+# --- Retry ---
+MAX_RETRY_COUNT: int = 5
+RETRY_BASE_DELAY: float = 1.0           # seconds, exponential backoff
+
+# --- Registry ---
+REGISTRY_RECORD_DEFAULT_TTL: int = 86_400  # 24 hours
+
+# --- Trust ---
+MAX_VOUCH_DURATION_SECONDS: int = 31_536_000   # 365 days
+MAX_BOND_DURATION_SECONDS: int = 31_536_000    # 365 days
+
+# --- Crypto ---
+KEY_ROTATION_RECOMMENDED_SECONDS: int = 7_776_000  # 90 days
+
+# --- Trust score ---
+TRUST_SCORE_MIN: float = 0.0
+TRUST_SCORE_MAX: float = 1.0
+
+# --- Differential privacy ---
+MAX_EPSILON: float = 10.0
+
+# --- Rate limits (defaults) ---
+RATE_MESSAGES_PER_MINUTE: int = 1000
+RATE_BOND_REQUESTS_PER_HOUR: int = 10
+RATE_DISCOVERY_PER_MINUTE: int = 100
+RATE_BROADCAST_PER_MINUTE: int = 5
+RATE_KNOWLEDGE_PER_MINUTE: int = 50
+
+# --- Recovery ---
+DEFAULT_RECOVERY_THRESHOLD: int = 3
+DEFAULT_RECOVERY_SHARES: int = 5
+MAX_RECOVERY_SHARES: int = 255
+
+# --- Supported transports ---
+TRANSPORT_WS: str = "ocp-ws"
+TRANSPORT_HTTP: str = "ocp-http"
+TRANSPORT_NATS: str = "ocp-nats"
+TRANSPORT_GRPC: str = "ocp-grpc"
+
+SUPPORTED_TRANSPORTS: frozenset[str] = frozenset(
+    {TRANSPORT_WS, TRANSPORT_HTTP, TRANSPORT_NATS, TRANSPORT_GRPC}
+)
+
+# --- Network identifiers ---
+NETWORK_MAINNET: str = "mainnet"
+NETWORK_TESTNET: str = "testnet"
+
+# --- DID method ---
+DID_METHOD: str = "ocp"
+
+# --- WebSocket subprotocol ---
+WS_SUBPROTOCOL: str = "ocp.v1"
+
+# --- HKDF info strings ---
+HKDF_INFO_AES_KEY: bytes = b"ocp-v1-aes-key"
+HKDF_INFO_RECOVERY: bytes = b"ocp-v1-recovery-share"
+
+
+═══ FILE: sdk/python/ocp/exceptions.py ═══
+
+"""OCP exception hierarchy.
+
+All OCP-specific exceptions inherit from :class:`OCPError`. Transport,
+authentication, validation, trust, and privacy subsystems each have a
+dedicated exception class so callers can handle failures granularly.
+"""
+
+from __future__ import annotations
+
+
+class OCPError(Exception):
+    """Base exception for all OCP errors.
+
+    Attributes:
+        code: Optional OCP error code (e.g., ``"OCP-400"``).
+    """
+
+    def __init__(self, message: str, code: str | None = None) -> None:
+        super().__init__(message)
+        self.code = code
+
+    def __repr__(self) -> str:
+        cls = type(self).__name__
+        if self.code:
+            return f"{cls}(code={self.code!r}, message={str(self)!r})"
+        return f"{cls}(message={str(self)!r})"
+
+
+class OCPAuthError(OCPError):
+    """Authentication or authorization failure.
+
+    Raised when an agent fails the WebSocket auth handshake, presents
+    an invalid signature, or attempts an operation requiring a higher
+    trust level than it holds.
+
+    Typical codes: ``OCP-401``, ``OCP-403``.
+    """
+
+
+class OCPTransportError(OCPError):
+    """Transport-layer failure.
+
+    Raised on connection failures, DNS resolution errors, TLS
+    handshake failures, message delivery failures, and routing errors.
+
+    Typical codes: ``OCP-502``, ``OCP-503``.
+    """
+
+
+class OCPValidationError(OCPError):
+    """Message or schema validation failure.
+
+    Raised when an outgoing or incoming OCPUMF message fails structural
+    validation, schema compliance, or business-rule checks.
+
+    Typical code: ``OCP-400``.
+    """
+
+
+class OCPTrustError(OCPError):
+    """Insufficient trust level or bond permissions.
+
+    Raised when an agent attempts an operation that its current trust
+    level or bond permissions do not allow.
+
+    Typical code: ``OCP-403``.
+    """
+
+
+class OCPPrivacyViolation(OCPError):
+    """Privacy Validation Layer rejection.
+
+    Raised when a knowledge payload fails one of the PVL checks
+    (PII detection, anonymization, differential privacy, provenance,
+    or size limits).
+
+    Attributes:
+        pvl_code: The specific PVL rejection code (``PVL-001`` through ``PVL-006``).
+    """
+
+    def __init__(self, message: str, pvl_code: str) -> None:
+        super().__init__(message, code=pvl_code)
+        self.pvl_code = pvl_code
+
+    def __repr__(self) -> str:
+        return f"OCPPrivacyViolation(pvl_code={self.pvl_code!r}, message={str(self)!r})"
+
+
+class OCPTimeoutError(OCPError):
+    """Operation timed out.
+
+    Raised when an acknowledgement, task response, or auth handshake
+    is not received within the protocol-specified time window.
+
+    Typical code: ``OCP-408``.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message, code="OCP-408")
+
+
+class OCPRateLimitError(OCPError):
+    """Rate limit exceeded.
+
+    Raised when the agent has exceeded the allowable request rate for
+    a given operation category.
+
+    Attributes:
+        retry_after: Number of seconds the caller should wait before retrying.
+    """
+
+    def __init__(self, message: str, retry_after: int) -> None:
+        super().__init__(message, code="OCP-429")
+        self.retry_after = retry_after
+
+    def __repr__(self) -> str:
+        return f"OCPRateLimitError(retry_after={self.retry_after}, message={str(self)!r})"
+
+
+class OCPAgentNotFoundError(OCPError):
+    """Agent not found in registry.
+
+    Raised when a DID lookup, registry resolve, or message routing
+    attempt fails because the target agent does not exist or is inactive.
+
+    Typical code: ``OCP-404``.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message, code="OCP-404")
+
+
+class OCPConsensusError(OCPError):
+    """Consensus protocol error.
+
+    Raised on invalid votes, quorum failures, or deadline violations
+    during a consensus round.
+    """
+
+
+class OCPRecoveryError(OCPError):
+    """Key recovery error.
+
+    Raised when share generation, distribution, or reconstruction
+    fails — for example, due to corrupted shares or a fingerprint
+    mismatch.
+    """
+
+
+═══ FILE: sdk/python/ocp/crypto.py ═══
+
+"""Cryptographic primitives for OCP.
+
+This module provides the core cryptographic operations required by the
+OCP specification:
+
+- **Ed25519** signing and verification (RFC 8032)
+- **X25519** Diffie-Hellman key exchange (RFC 7748)
+- **AES-256-GCM** symmetric encryption (NIST SP 800-38D)
+- **SHA-3-256** hashing (FIPS 202)
+- **HKDF-SHA-256** key derivation (RFC 5869)
+- Agent ID derivation from public keys
+- Nonce and message ID generation
+
+All binary outputs are base64url-encoded (RFC 4648 §5, no padding)
+when serialized to strings.
+"""
+
+from __future__ import annotations
+
+import base64
+import hashlib
+import os
+import secrets
+import uuid
+from dataclasses import dataclass
+from typing import Self
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import (
+    Ed25519PrivateKey,
+    Ed25519PublicKey,
+)
+from cryptography.hazmat.primitives.asymmetric.x25519 import (
+    X25519PrivateKey,
+    X25519PublicKey,
+)
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.hashes import SHA256
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+    PublicFormat,
+)
+
+from ocp.constants import HKDF_INFO_AES_KEY
+
+
+# ==========================================================================
+# Base64url helpers
+# ==========================================================================
+
+def b64url_encode(data: bytes) -> str:
+    """Encode bytes to a base64url string without padding.
+
+    Args:
+        data: Raw bytes to encode.
+
+    Returns:
+        Base64url-encoded string with ``=`` padding stripped.
+    """
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def b64url_decode(s: str) -> bytes:
+    """Decode a base64url string to bytes.
+
+    Handles missing padding automatically.
+
+    Args:
+        s: Base64url-encoded string, with or without ``=`` padding.
+
+    Returns:
+        Decoded bytes.
+    """
+    padding = 4 - len(s) % 4
+    if padding != 4:
+        s += "=" * padding
+    return base64.urlsafe_b64decode(s)
+
+
+# ==========================================================================
+# SHA-3 hashing
+# ==========================================================================
+
+def sha3_256(data: bytes) -> bytes:
+    """Compute the SHA-3-256 hash of *data*.
+
+    Args:
+        data: Input bytes.
+
+    Returns:
+        32-byte digest.
+    """
+    return hashlib.sha3_256(data).digest()
+
+
+def sha3_256_hex(data: bytes) -> str:
+    """Compute the SHA-3-256 hash and return a lowercase hex string.
+
+    Args:
+        data: Input bytes.
+
+    Returns:
+        64-character hexadecimal string.
+    """
+    return hashlib.sha3_256(data).hexdigest()
+
+
+# ==========================================================================
+# Ed25519 signing
+# ==========================================================================
+
+@dataclass(frozen=True)
+class SigningKeyPair:
+    """An Ed25519 signing keypair.
+
+    The private key is used to sign OCP messages and vouches.
+    The public key is published in the agent's DID Document.
+
+    Attributes:
+        private_key: The Ed25519 private key object.
+        public_key: The corresponding Ed25519 public key object.
+    """
+
+    private_key: Ed25519PrivateKey
+    public_key: Ed25519PublicKey
+
+    @classmethod
+    def generate(cls) -> Self:
+        """Generate a new Ed25519 keypair from the OS CSPRNG.
+
+        Returns:
+            A fresh :class:`SigningKeyPair`.
+        """
+        priv = Ed25519PrivateKey.generate()
+        return cls(private_key=priv, public_key=priv.public_key())
+
+    @classmethod
+    def from_private_bytes(cls, data: bytes) -> Self:
+        """Restore a keypair from raw 32-byte private key material.
+
+        Args:
+            data: 32 bytes of Ed25519 private key.
+
+        Returns:
+            The reconstructed :class:`SigningKeyPair`.
+        """
+        priv = Ed25519PrivateKey.from_private_bytes(data)
+        return cls(private_key=priv, public_key=priv.public_key())
+
+    def sign(self, data: bytes) -> bytes:
+        """Sign *data* with the private key.
+
+        Args:
+            data: Arbitrary bytes to sign.
+
+        Returns:
+            64-byte Ed25519 signature.
+        """
+        return self.private_key.sign(data)
+
+    def verify(self, signature: bytes, data: bytes) -> None:
+        """Verify a signature against the public key.
+
+        Args:
+            signature: 64-byte Ed25519 signature.
+            data: The original data that was signed.
+
+        Raises:
+            cryptography.exceptions.InvalidSignature: If verification fails.
+        """
+        self.public_key.verify(signature, data)
+
+    @property
+    def private_key_bytes(self) -> bytes:
+        """Raw 32-byte private key.
+
+        .. warning::
+            Handle with care. Never transmit over OCP or log.
+        """
+        return self.private_key.private_bytes(
+            Encoding.Raw, PrivateFormat.Raw, NoEncryption()
+        )
+
+    @property
+    def public_key_bytes(self) -> bytes:
+        """Raw 32-byte public key."""
+        return self.public_key.public_bytes(Encoding.Raw, PublicFormat.Raw)
+
+    @property
+    def public_key_b64url(self) -> str:
+        """Base64url-encoded public key."""
+        return b64url_encode(self.public_key_bytes)
+
+    @property
+    def public_key_multibase(self) -> str:
+        """Multibase-encoded public key with ``z`` (base58btc) prefix.
+
+        Note:
+            This is a simplified encoding. A production implementation
+            should use proper multibase with multicodec prefix per the
+            W3C DID specification.
+        """
+        return "z" + b64url_encode(self.public_key_bytes)
+
+
+def verify_signature(public_key_bytes: bytes, signature: bytes, data: bytes) -> bool:
+    """Verify an Ed25519 signature given raw public key bytes.
+
+    Args:
+        public_key_bytes: 32-byte Ed25519 public key.
+        signature: 64-byte Ed25519 signature.
+        data: The original signed data.
+
+    Returns:
+        ``True`` if the signature is valid, ``False`` otherwise.
+    """
+    try:
+        pub = Ed25519PublicKey.from_public_bytes(public_key_bytes)
+        pub.verify(signature, data)
+        return True
+    except Exception:
+        return False
+
+
+# ==========================================================================
+# X25519 key exchange
+# ==========================================================================
+
+@dataclass(frozen=True)
+class EncryptionKeyPair:
+    """An X25519 key exchange keypair.
+
+    Used for ECDH shared secret derivation in message encryption
+    and recovery share encryption.
+
+    Attributes:
+        private_key: The X25519 private key object.
+        public_key: The corresponding X25519 public key object.
+    """
+
+    private_key: X25519PrivateKey
+    public_key: X25519PublicKey
+
+    @classmethod
+    def generate(cls) -> Self:
+        """Generate a new X25519 keypair from the OS CSPRNG.
+
+        Returns:
+            A fresh :class:`EncryptionKeyPair`.
+        """
+        priv = X25519PrivateKey.generate()
+        return cls(private_key=priv, public_key=priv.public_key())
+
+    @property
+    def public_key_bytes(self) -> bytes:
+        """Raw 32-byte public key."""
+        return self.public_key.public_bytes(Encoding.Raw, PublicFormat.Raw)
+
+    @property
+    def public_key_b64url(self) -> str:
+        """Base64url-encoded public key."""
+        return b64url_encode(self.public_key_bytes)
+
+
+def ecdh_derive_key(
+    our_private: X25519PrivateKey,
+    their_public_bytes: bytes,
+    info: bytes = HKDF_INFO_AES_KEY,
+) -> bytes:
+    """Perform ECDH key exchange and derive a 256-bit AES key.
+
+    Uses X25519 for the shared secret and HKDF-SHA-256 for key
+    derivation, as specified in OCP §7.3.
+
+    Args:
+        our_private: Our X25519 private key.
+        their_public_bytes: The peer's 32-byte X25519 public key.
+        info: HKDF info parameter. Defaults to ``b"ocp-v1-aes-key"``.
+
+    Returns:
+        32-byte derived AES key.
+    """
+    their_public = X25519PublicKey.from_public_bytes(their_public_bytes)
+    shared_secret = our_private.exchange(their_public)
+    derived = HKDF(
+        algorithm=SHA256(),
+        length=32,
+        salt=None,
+        info=info,
+    ).derive(shared_secret)
+    return derived
+
+
+# ==========================================================================
+# AES-256-GCM encryption
+# ==========================================================================
+
+def aes_gcm_encrypt(key: bytes, plaintext: bytes, aad: bytes | None = None) -> tuple[bytes, bytes]:
+    """Encrypt with AES-256-GCM.
+
+    Args:
+        key: 32-byte AES key.
+        plaintext: Data to encrypt.
+        aad: Optional additional authenticated data.
+
+    Returns:
+        Tuple of ``(nonce, ciphertext)``. The nonce is 12 bytes (96 bits).
+    """
+    nonce = os.urandom(12)
+    aesgcm = AESGCM(key)
+    ct = aesgcm.encrypt(nonce, plaintext, aad)
+    return nonce, ct
+
+
+def aes_gcm_decrypt(key: bytes, nonce: bytes, ciphertext: bytes, aad: bytes | None = None) -> bytes:
+    """Decrypt AES-256-GCM ciphertext.
+
+    Args:
+        key: 32-byte AES key.
+        nonce: 12-byte nonce used during encryption.
+        ciphertext: Encrypted data with authentication tag.
+        aad: Optional additional authenticated data (must match encryption).
+
+    Returns:
+        Decrypted plaintext bytes.
+
+    Raises:
+        cryptography.exceptions.InvalidTag: If decryption or authentication fails.
+    """
+    aesgcm = AESGCM(key)
+    return aesgcm.decrypt(nonce, ciphertext, aad)
+
+
+# ==========================================================================
+# Encrypt / decrypt full messages
+# ==========================================================================
+
+def encrypt_payload(
+    plaintext: bytes,
+    recipient_public_key_bytes: bytes,
+    info: bytes = HKDF_INFO_AES_KEY,
+) -> dict[str, str]:
+    """Encrypt a payload for a specific recipient.
+
+    Generates an ephemeral X25519 keypair, derives a shared AES key
+    via ECDH + HKDF, and encrypts with AES-256-GCM.
+
+    Args:
+        plaintext: Bytes to encrypt.
+        recipient_public_key_bytes: Recipient's 32-byte X25519 public key.
+        info: HKDF info string.
+
+    Returns:
+        Dict with ``algorithm``, ``key_exchange``, ``nonce``,
+        ``ephemeral_public_key``, and ``ciphertext`` — all string values
+        base64url-encoded where applicable.
+    """
+    ephemeral = EncryptionKeyPair.generate()
+    aes_key = ecdh_derive_key(ephemeral.private_key, recipient_public_key_bytes, info)
+    nonce, ct = aes_gcm_encrypt(aes_key, plaintext)
+    return {
+        "algorithm": "AES-256-GCM",
+        "key_exchange": "ECDH-X25519",
+        "nonce": b64url_encode(nonce),
+        "ephemeral_public_key": ephemeral.public_key_b64url,
+        "ciphertext": b64url_encode(ct),
+    }
+
+
+def decrypt_payload(
+    encrypted: dict[str, str],
+    our_private_key: X25519PrivateKey,
+    info: bytes = HKDF_INFO_AES_KEY,
+) -> bytes:
+    """Decrypt a payload encrypted with :func:`encrypt_payload`.
+
+    Args:
+        encrypted: Dict as returned by :func:`encrypt_payload`.
+        our_private_key: Our X25519 private key.
+        info: HKDF info string (must match what was used to encrypt).
+
+    Returns:
+        Decrypted plaintext bytes.
+    """
+    eph_pub = b64url_decode(encrypted["ephemeral_public_key"])
+    aes_key = ecdh_derive_key(our_private_key, eph_pub, info)
+    nonce = b64url_decode(encrypted["nonce"])
+    ct = b64url_decode(encrypted["ciphertext"])
+    return aes_gcm_decrypt(aes_key, nonce, ct)
+
+
+# ==========================================================================
+# Agent ID derivation
+# ==========================================================================
+
+def derive_agent_id(public_key_bytes: bytes, network: str = "mainnet") -> str:
+    """Derive an OCP Agent DID from a public key.
+
+    Takes the first 48 bits (6 bytes) of SHA-3-256(public_key) and
+    formats as ``did:ocp:<network>:agent-<12 hex chars>``.
+
+    Args:
+        public_key_bytes: 32-byte Ed25519 public key.
+        network: Network identifier (``"mainnet"`` or ``"testnet"``).
+
+    Returns:
+        A DID string such as ``did:ocp:mainnet:agent-a3f9b2c1d4e5``.
+    """
+    h = sha3_256(public_key_bytes)
+    agent_hex = h[:6].hex()
+    return f"did:ocp:{network}:agent-{agent_hex}"
+
+
+# ==========================================================================
+# Nonce and ID generation
+# ==========================================================================
+
+def generate_nonce(length: int = 32) -> str:
+    """Generate a cryptographically secure random nonce as base64url.
+
+    Args:
+        length: Number of random bytes (default 32 = 256 bits).
+
+    Returns:
+        Base64url-encoded nonce string.
+    """
+    return b64url_encode(secrets.token_bytes(length))
+
+
+def generate_message_id() -> str:
+    """Generate a truncated UUIDv4 message ID per OCPUMF spec.
+
+    Format: ``msg-<8hex>-<4hex>-<4hex>-<4hex>``
+
+    Returns:
+        A unique message identifier string.
+    """
+    u = uuid.uuid4().hex
+    return f"msg-{u[:8]}-{u[8:12]}-{u[12:16]}-{u[16:20]}"
+
+
+def generate_uuid_short(prefix: str = "") -> str:
+    """Generate a short prefixed UUID for bonds, tasks, insights, etc.
+
+    Args:
+        prefix: String prefix (e.g., ``"bond-"``, ``"task-"``).
+
+    Returns:
+        Prefixed identifier string.
+    """
+    u = uuid.uuid4().hex
+    return f"{prefix}{u[:8]}-{u[8:12]}-{u[12:16]}-{u[16:20]}"
+
+
+═══ FILE: sdk/python/ocp/identity.py ═══
+
+"""Agent identity management.
+
+This module handles:
+
+- Generating new agent identities (Ed25519 + X25519 keypairs, DID derivation)
+- Building W3C-compliant DID Documents
+- DID resolution strategies
+- Key rotation support
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any
+
+from ocp.constants import DID_METHOD, NETWORK_MAINNET
+from ocp.crypto import (
+    EncryptionKeyPair,
+    SigningKeyPair,
+    derive_agent_id,
+    sha3_256_hex,
+)
+
+# Regex for validating OCP DIDs
+DID_PATTERN = re.compile(r"^did:ocp:[a-z]+:agent-[0-9a-f]{12}$")
+
+
+def validate_did(did: str) -> bool:
+    """Check whether a string is a valid OCP DID.
+
+    Args:
+        did: Candidate DID string.
+
+    Returns:
+        ``True`` if valid, ``False`` otherwise.
+    """
+    return bool(DID_PATTERN.match(did))
+
+
+@dataclass
+class DIDDocument:
+    """W3C DID Document extended for OCP.
+
+    This is the public identity document for an agent, published at a
+    resolvable URL or stored in the Agent Registry.
+
+    Attributes:
+        agent_id: The agent's DID.
+        public_key_multibase: Multibase-encoded Ed25519 public key.
+        service_endpoint: Primary OCP messaging endpoint URL.
+        capabilities: List of capability identifiers the agent supports.
+        trust_attestations: Vouch records from other agents.
+        revoked_keys: List of revoked key records.
+        recovery_keys: Optional secondary recovery key entries.
+    """
+
+    agent_id: str
+    public_key_multibase: str
+    service_endpoint: str
+    capabilities: list[str] = field(default_factory=list)
+    trust_attestations: list[dict[str, Any]] = field(default_factory=list)
+    revoked_keys: list[dict[str, str]] = field(default_factory=list)
+    recovery_keys: list[dict[str, Any]] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to a W3C-compliant DID Document dict.
+
+        Returns:
+            JSON-serializable dict conforming to the OCP DID Document schema.
+        """
+        doc: dict[str, Any] = {
+            "@context": [
+                "https://www.w3.org/ns/did/v1",
+                "https://opencognitionprotocol.org/ns/ocp/v1",
+            ],
+            "id": self.agent_id,
+            "verificationMethod": [
+                {
+                    "id": f"{self.agent_id}#key-1",
+                    "type": "Ed25519VerificationKey2020",
+                    "controller": self.agent_id,
+                    "publicKeyMultibase": self.public_key_multibase,
+                }
+            ],
+            "authentication": [f"{self.agent_id}#key-1"],
+            "service": [
+                {
+                    "id": f"{self.agent_id}#ocp-endpoint",
+                    "type": "OCPMessaging",
+                    "serviceEndpoint": self.service_endpoint,
+                }
+            ],
+        }
+
+        if self.capabilities:
+            doc["capabilityDeclaration"] = self.capabilities
+
+        if self.trust_attestations:
+            doc["trustAttestations"] = self.trust_attestations
+
+        if self.revoked_keys:
+            doc["revocation"] = self.revoked_keys
+
+        # Recovery keys are added as additional verificationMethod entries
+        for i, rk in enumerate(self.recovery_keys):
+            method = {
+                "id": f"{self.agent_id}#recovery-key-{i + 1}",
+                "type": "Ed25519VerificationKey2020",
+                "controller": self.agent_id,
+                "publicKeyMultibase": rk["publicKeyMultibase"],
+                "purpose": "recovery",
+            }
+            doc["verificationMethod"].append(method)
+
+        return doc
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> DIDDocument:
+        """Deserialize from a DID Document dict.
+
+        Args:
+            data: Parsed JSON DID Document.
+
+        Returns:
+            A :class:`DIDDocument` instance.
+        """
+        vm = data.get("verificationMethod", [])
+        primary_key = vm[0]["publicKeyMultibase"] if vm else ""
+
+        service = data.get("service", [])
+        endpoint = service[0]["serviceEndpoint"] if service else ""
+
+        recovery = [
+            {"publicKeyMultibase": m["publicKeyMultibase"]}
+            for m in vm
+            if m.get("purpose") == "recovery"
+        ]
+
+        return cls(
+            agent_id=data["id"],
+            public_key_multibase=primary_key,
+            service_endpoint=endpoint,
+            capabilities=data.get("capabilityDeclaration", []),
+            trust_attestations=data.get("trustAttestations", []),
+            revoked_keys=data.get("revocation", []),
+            recovery_keys=recovery,
+        )
+
+
+@dataclass
+class AgentIdentity:
+    """Manages an agent's complete cryptographic identity.
+
+    Holds the signing keypair, encryption keypair, derived DID, and
+    provides methods to produce DID Documents, sign data, and rotate keys.
+
+    Attributes:
+        signing_keys: Ed25519 keypair for message signing.
+        encryption_keys: X25519 keypair for ECDH key exchange.
+        agent_id: The derived OCP DID.
+        network: Network identifier.
+        created_at: When the identity was generated.
+        key_fingerprint: First 16 hex chars of SHA-3-256(public_key).
+        previous_keys: List of rotated-out signing keypairs (for graceful rotation).
+    """
+
+    signing_keys: SigningKeyPair
+    encryption_keys: EncryptionKeyPair
+    agent_id: str
+    network: str = NETWORK_MAINNET
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    previous_keys: list[SigningKeyPair] = field(default_factory=list, repr=False)
+
+    @classmethod
+    def generate(cls, network: str = NETWORK_MAINNET) -> AgentIdentity:
+        """Generate a brand-new agent identity.
+
+        Creates fresh Ed25519 and X25519 keypairs, derives the agent DID,
+        and initializes the identity.
+
+        Args:
+            network: Network identifier (``"mainnet"`` or ``"testnet"``).
+
+        Returns:
+            A new :class:`AgentIdentity`.
+        """
+        signing = SigningKeyPair.generate()
+        encryption = EncryptionKeyPair.generate()
+        agent_id = derive_agent_id(signing.public_key_bytes, network)
+        return cls(
+            signing_keys=signing,
+            encryption_keys=encryption,
+            agent_id=agent_id,
+            network=network,
+        )
+
+    @classmethod
+    def from_private_key(cls, private_key_bytes: bytes, network: str = NETWORK_MAINNET) -> AgentIdentity:
+        """Restore an identity from a raw Ed25519 private key.
+
+        Useful after key recovery via Shamir's Secret Sharing.
+
+        Args:
+            private_key_bytes: 32-byte Ed25519 private key.
+            network: Network identifier.
+
+        Returns:
+            The restored :class:`AgentIdentity`.
+        """
+        signing = SigningKeyPair.from_private_bytes(private_key_bytes)
+        encryption = EncryptionKeyPair.generate()
+        agent_id = derive_agent_id(signing.public_key_bytes, network)
+        return cls(
+            signing_keys=signing,
+            encryption_keys=encryption,
+            agent_id=agent_id,
+            network=network,
+        )
+
+    @property
+    def key_fingerprint(self) -> str:
+        """First 16 hex chars of SHA-3-256(public_key).
+
+        Used for recovery share verification.
+        """
+        return sha3_256_hex(self.signing_keys.public_key_bytes)[:16]
+
+    def did_document(
+        self,
+        service_endpoint: str,
+        capabilities: list[str] | None = None,
+        recovery_keys: list[dict[str, Any]] | None = None,
+    ) -> DIDDocument:
+        """Build a DID Document for this identity.
+
+        Args:
+            service_endpoint: The agent's OCP messaging URL.
+            capabilities: Optional list of capability identifiers.
+            recovery_keys: Optional list of recovery key entries.
+
+        Returns:
+            A :class:`DIDDocument` instance.
+        """
+        return DIDDocument(
+            agent_id=self.agent_id,
+            public_key_multibase=self.signing_keys.public_key_multibase,
+            service_endpoint=service_endpoint,
+            capabilities=capabilities or [],
+            recovery_keys=recovery_keys or [],
+        )
+
+    def sign(self, data: bytes) -> bytes:
+        """Sign arbitrary data with the current signing key.
+
+        Args:
+            data: Bytes to sign.
+
+        Returns:
+            64-byte Ed25519 signature.
+        """
+        return self.signing_keys.sign(data)
+
+    def rotate_signing_key(self) -> SigningKeyPair:
+        """Rotate the signing key.
+
+        Moves the current signing key to ``previous_keys`` and generates
+        a fresh one. The agent DID does **not** change (it is derived from
+        the original key). The old key should be added to the DID Document's
+        revocation list after a grace period.
+
+        Returns:
+            The **old** :class:`SigningKeyPair` (now in ``previous_keys``).
+        """
+        old = self.signing_keys
+        self.previous_keys.append(old)
+        new_signing = SigningKeyPair.generate()
+        object.__setattr__(self, "signing_keys", new_signing)
+        return old
+
+    def rotate_encryption_key(self) -> EncryptionKeyPair:
+        """Rotate the encryption key.
+
+        Generates a fresh X25519 keypair. The old keypair is returned
+        so the caller can continue to decrypt in-flight messages.
+
+        Returns:
+            The **old** :class:`EncryptionKeyPair`.
+        """
+        old = self.encryption_keys
+        object.__setattr__(self, "encryption_keys", EncryptionKeyPair.generate())
+        return old
+
+
+═══ FILE: sdk/python/ocp/messages.py ═══
+
+"""OCPUMF message builder, serializer, validator, and parser.
+
+This module provides:
+
+- :class:`MessageType` — enum of all OCP message types
+- :class:`Priority` — message priority levels
+- :class:`MessageBuilder` — fluent builder for constructing signed messages
+- :class:`MessageValidator` — structural and cryptographic message validation
+- Helper functions for message parsing and serialization
+"""
+
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from enum import StrEnum
+from typing import Any
+
+import jsoncanon
+
+from ocp.constants import DEFAULT_TTL, MAX_TTL, OCP_VERSION
+from ocp.crypto import (
+    SigningKeyPair,
+    b64url_decode,
+    b64url_encode,
+    generate_message_id,
+    sha3_256,
+    verify_signature,
+)
+from ocp.exceptions import OCPAuthError, OCPValidationError
+
+
+class MessageType(StrEnum):
+    """All OCP v1.0 message types."""
+
+    DISCOVERY_PING = "discovery_ping"
+    CAPABILITY_QUERY = "capability_query"
+    CAPABILITY_RESPONSE = "capability_response"
+    KNOWLEDGE_SHARE = "knowledge_share"
+    KNOWLEDGE_ACK = "knowledge_ack"
+    TASK_REQUEST = "task_request"
+    TASK_RESPONSE = "task_response"
+    BOND_REQUEST = "bond_request"
+    BOND_NEGOTIATE = "bond_negotiate"
+    BOND_ACCEPT = "bond_accept"
+    BOND_CONFIRM = "bond_confirm"
+    BOND_REVOKE = "bond_revoke"
+    CONSENSUS_INITIATE = "consensus_initiate"
+    CONSENSUS_VOTE = "consensus_vote"
+    CONSENSUS_RESULT = "consensus_result"
+    BROADCAST = "broadcast"
+    RECOVERY_REQUEST = "recovery_request"
+    RECOVERY_SHARE_RESPONSE = "recovery_share_response"
+    SHARE_REVOKE = "share_revoke"
+    ACK = "ack"
+    ERROR = "error"
+
+
+class Priority(StrEnum):
+    """Message priority levels."""
+
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+# Set of valid message type strings for fast lookup
+_VALID_TYPES: frozenset[str] = frozenset(t.value for t in MessageType)
+
+
+def _utcnow_iso() -> str:
+    """Current UTC time as ISO 8601 string."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+class MessageBuilder:
+    """Fluent builder for constructing signed OCPUMF messages.
+
+    Usage::
+
+        msg = (
+            MessageBuilder(sender_id, signing_keys)
+            .to(receiver_id)
+            .type(MessageType.KNOWLEDGE_SHARE)
+            .payload({"knowledge_type": "insight", ...})
+            .ttl(3600)
+            .tag("oncology", "imaging")
+            .require_ack()
+            .build()
+        )
+
+    Args:
+        sender_id: The sending agent's DID.
+        signing_keys: The sender's Ed25519 keypair for signing.
+    """
+
+    def __init__(self, sender_id: str, signing_keys: SigningKeyPair) -> None:
+        self._sender_id = sender_id
+        self._signing_keys = signing_keys
+        self._receiver_id: str = ""
+        self._broadcast: bool = False
+        self._message_type: MessageType = MessageType.ACK
+        self._priority: Priority = Priority.NORMAL
+        self._ttl: int = DEFAULT_TTL
+        self._payload: dict[str, Any] = {}
+        self._tags: list[str] = []
+        self._language: str = "en"
+        self._requires_ack: bool = False
+        self._correlation_id: str | None = None
+        self._trace_id: str | None = None
+        self._encryption: dict[str, Any] | None = None
+
+    # --- Receiver ---
+
+    def to(self, receiver_id: str) -> MessageBuilder:
+        """Set the receiver agent ID for a direct message."""
+        self._receiver_id = receiver_id
+        self._broadcast = False
+        return self
+
+    def to_broadcast(self, receiver_id: str = "did:ocp:mainnet:broadcast") -> MessageBuilder:
+        """Set the message as a broadcast."""
+        self._receiver_id = receiver_id
+        self._broadcast = True
+        return self
+
+    # --- Message properties ---
+
+    def type(self, message_type: MessageType) -> MessageBuilder:
+        """Set the message type."""
+        self._message_type = message_type
+        return self
+
+    def payload(self, data: dict[str, Any]) -> MessageBuilder:
+        """Set the message payload."""
+        self._payload = data
+        return self
+
+    def priority(self, p: Priority) -> MessageBuilder:
+        """Set the priority level."""
+        self._priority = p
+        return self
+
+    def ttl(self, seconds: int) -> MessageBuilder:
+        """Set the time-to-live in seconds.
+
+        Raises:
+            OCPValidationError: If *seconds* is outside [1, 86400].
+        """
+        if not 1 <= seconds <= MAX_TTL:
+            raise OCPValidationError(
+                f"TTL must be between 1 and {MAX_TTL}, got {seconds}",
+                code="OCP-400",
+            )
+        self._ttl = seconds
+        return self
+
+    # --- Metadata ---
+
+    def tag(self, *tags: str) -> MessageBuilder:
+        """Add one or more tags to the message metadata."""
+        self._tags.extend(tags)
+        return self
+
+    def language(self, lang: str) -> MessageBuilder:
+        """Set the payload language (ISO 639-1 code)."""
+        self._language = lang
+        return self
+
+    def require_ack(self) -> MessageBuilder:
+        """Mark this message as requiring acknowledgement."""
+        self._requires_ack = True
+        return self
+
+    def correlate(self, message_id: str) -> MessageBuilder:
+        """Set the correlation ID (links to a prior message)."""
+        self._correlation_id = message_id
+        return self
+
+    def trace(self, trace_id: str) -> MessageBuilder:
+        """Set a distributed trace ID."""
+        self._trace_id = trace_id
+        return self
+
+    # --- Encryption ---
+
+    def encrypt(self, encryption_config: dict[str, Any]) -> MessageBuilder:
+        """Attach encryption metadata.
+
+        The caller is responsible for encrypting the payload separately
+        (see :func:`ocp.crypto.encrypt_payload`). This method sets the
+        ``encryption`` envelope field.
+        """
+        self._encryption = encryption_config
+        return self
+
+    # --- Build ---
+
+    def build(self) -> dict[str, Any]:
+        """Build and sign the OCPUMF message.
+
+        Returns:
+            A complete, signed OCPUMF message dict.
+
+        Raises:
+            OCPValidationError: If required fields are missing.
+        """
+        if not self._receiver_id:
+            raise OCPValidationError("Receiver is required", code="OCP-400")
+
+        msg: dict[str, Any] = {
+            "ocp_version": OCP_VERSION,
+            "message_id": generate_message_id(),
+            "timestamp": _utcnow_iso(),
+            "ttl": self._ttl,
+            "sender": {
+                "agent_id": self._sender_id,
+                "signature": "",
+            },
+            "receiver": {
+                "agent_id": self._receiver_id,
+                "broadcast": self._broadcast,
+            },
+            "message_type": self._message_type.value,
+            "priority": self._priority.value,
+            "payload": self._payload,
+            "metadata": {
+                "tags": self._tags,
+                "language": self._language,
+                "requires_ack": self._requires_ack,
+            },
+        }
+
+        if self._encryption:
+            msg["encryption"] = self._encryption
+        if self._correlation_id:
+            msg["metadata"]["correlation_id"] = self._correlation_id
+        if self._trace_id:
+            msg["metadata"]["trace_id"] = self._trace_id
+
+        # Sign per OCP §7.2:
+        # signature = Ed25519_Sign(sk, SHA3-256(canonical_json(msg without sig)))
+        msg_for_signing = json.loads(json.dumps(msg))
+        msg_for_signing["sender"]["signature"] = ""
+        canonical = jsoncanon.canonicalize(msg_for_signing)
+        digest = sha3_256(canonical)
+        sig = self._signing_keys.sign(digest)
+        msg["sender"]["signature"] = b64url_encode(sig)
+
+        return msg
+
+
+class MessageValidator:
+    """Validates OCPUMF messages for structural correctness and signatures.
+
+    Usage::
+
+        validator = MessageValidator()
+        validator.validate_structure(msg)          # structure only
+        validator.validate_signature(msg, pub_key) # crypto verification
+        validator.validate(msg, pub_key)           # both
+    """
+
+    _REQUIRED_FIELDS: tuple[str, ...] = (
+        "ocp_version", "message_id", "timestamp",
+        "sender", "receiver", "message_type", "payload",
+    )
+
+    def validate_structure(self, msg: dict[str, Any]) -> None:
+        """Validate message structure without cryptographic checks.
+
+        Raises:
+            OCPValidationError: On any structural violation.
+        """
+        for f in self._REQUIRED_FIELDS:
+            if f not in msg:
+                raise OCPValidationError(f"Missing required field: {f}", code="OCP-400")
+
+        if msg["ocp_version"] != OCP_VERSION:
+            raise OCPValidationError(
+                f"Unsupported OCP version: {msg['ocp_version']}", code="OCP-400"
+            )
+
+        if not msg["message_id"].startswith("msg-"):
+            raise OCPValidationError("Invalid message_id format", code="OCP-400")
+
+        if msg["message_type"] not in _VALID_TYPES:
+            raise OCPValidationError(
+                f"Unknown message_type: {msg['message_type']}", code="OCP-400"
+            )
+
+        sender = msg.get("sender", {})
+        if "agent_id" not in sender:
+            raise OCPValidationError("Missing sender.agent_id", code="OCP-400")
+        if "signature" not in sender:
+            raise OCPValidationError("Missing sender.signature", code="OCP-400")
+
+        receiver = msg.get("receiver", {})
+        if "agent_id" not in receiver:
+            raise OCPValidationError("Missing receiver.agent_id", code="OCP-400")
+
+        ttl = msg.get("ttl", DEFAULT_TTL)
+        if not 1 <= ttl <= MAX_TTL:
+            raise OCPValidationError(f"TTL out of range: {ttl}", code="OCP-400")
+
+        # Check timestamp is parseable
+        try:
+            datetime.fromisoformat(msg["timestamp"].replace("Z", "+00:00"))
+        except (ValueError, AttributeError):
+            raise OCPValidationError("Invalid timestamp format", code="OCP-400")
+
+    def validate_signature(self, msg: dict[str, Any], public_key_bytes: bytes) -> None:
+        """Verify the message signature.
+
+        Args:
+            msg: The complete OCPUMF message.
+            public_key_bytes: 32-byte Ed25519 public key of the sender.
+
+        Raises:
+            OCPAuthError: If the signature is invalid.
+        """
+        sig_b64 = msg.get("sender", {}).get("signature", "")
+        if not sig_b64:
+            raise OCPAuthError("Missing signature", code="OCP-401")
+
+        try:
+            sig_bytes = b64url_decode(sig_b64)
+        except Exception:
+            raise OCPAuthError("Malformed signature encoding", code="OCP-401")
+
+        # Reconstruct the signed content
+        msg_for_verify = json.loads(json.dumps(msg))
+        msg_for_verify["sender"]["signature"] = ""
+        canonical = jsoncanon.canonicalize(msg_for_verify)
+        digest = sha3_256(canonical)
+
+        if not verify_signature(public_key_bytes, sig_bytes, digest):
+            raise OCPAuthError("Signature verification failed", code="OCP-401")
+
+    def validate(self, msg: dict[str, Any], public_key_bytes: bytes | None = None) -> None:
+        """Validate structure and optionally verify signature.
+
+        Args:
+            msg: The complete OCPUMF message.
+            public_key_bytes: If provided, signature is verified against this key.
+
+        Raises:
+            OCPValidationError: On structural failures.
+            OCPAuthError: On signature failures.
+        """
+        self.validate_structure(msg)
+        if public_key_bytes is not None:
+            self.validate_signature(msg, public_key_bytes)
+
+
+def is_expired(msg: dict[str, Any]) -> bool:
+    """Check whether a message has exceeded its TTL.
+
+    Args:
+        msg: An OCPUMF message dict.
+
+    Returns:
+        ``True`` if the message is expired, ``False`` otherwise.
+    """
+    try:
+        ts = datetime.fromisoformat(msg["timestamp"].replace("Z", "+00:00"))
+        ttl = msg.get("ttl", DEFAULT_TTL)
+        from datetime import timedelta
+        return datetime.now(timezone.utc) > ts + timedelta(seconds=ttl)
+    except Exception:
+        return True
+
+
+def build_ack(original_msg: dict[str, Any], sender_id: str, signing_keys: SigningKeyPair) -> dict[str, Any]:
+    """Build an ACK message for a received message.
+
+    Args:
+        original_msg: The message being acknowledged.
+        sender_id: The acknowledging agent's DID.
+        signing_keys: The acknowledging agent's signing keys.
+
+    Returns:
+        A signed ACK OCPUMF message.
+    """
+    return (
+        MessageBuilder(sender_id, signing_keys)
+        .to(original_msg["sender"]["agent_id"])
+        .type(MessageType.ACK)
+        .payload({"acknowledged_message_id": original_msg["message_id"]})
+        .correlate(original_msg["message_id"])
+        .build()
+    )
+
+
+def build_error(
+    code: str,
+    message: str,
+    reference_message_id: str,
+    sender_id: str,
+    signing_keys: SigningKeyPair,
+    receiver_id: str,
+    details: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build an error response message.
+
+    Args:
+        code: OCP error code (e.g., ``"OCP-400"``).
+        message: Human-readable error description.
+        reference_message_id: The ``message_id`` of the message that caused the error.
+        sender_id: The responding agent's DID.
+        signing_keys: The responding agent's signing keys.
+        receiver_id: The error recipient's DID.
+        details: Optional additional error details.
+
+    Returns:
+        A signed error OCPUMF message.
+    """
+    payload: dict[str, Any] = {
+        "error_code": code,
+        "message": message,
+        "reference_message_id": reference_message_id,
+    }
+    if details:
+        payload["details"] = details
+
+    return (
+        MessageBuilder(sender_id, signing_keys)
+        .to(receiver_id)
+        .type(MessageType.ERROR)
+        .payload(payload)
+        .correlate(reference_message_id)
+        .build()
+    )
+
+
+═══ FILE: sdk/python/ocp/knowledge.py ═══
+
+"""Knowledge types: embeddings, insights, and model deltas.
+
+OCP defines three types of shareable knowledge. This module provides
+dataclass-based builders for each type, with validation and serialization
+to OCP-compliant payload dicts.
+"""
+
+from __future__ import annotations
+
+import struct
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any
+
+from ocp.constants import MAX_EPSILON
+from ocp.crypto import b64url_encode, generate_uuid_short, sha3_256_hex
+
+
+def _utcnow_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# ==========================================================================
+# Type 1: Semantic Embeddings
+# ==========================================================================
+
+@dataclass
+class EmbeddingVector:
+    """A single labeled embedding vector.
+
+    Attributes:
+        label: Human-readable label for this vector.
+        vector: Raw bytes of the float array.
+        source_domain: Domain this embedding relates to.
+        id: Unique vector identifier (auto-generated if not provided).
+        created_at: Creation timestamp.
+    """
+
+    label: str
+    vector: bytes
+    source_domain: str = ""
+    id: str = field(default_factory=lambda: f"emb-{uuid.uuid4().hex[:8]}")
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to OCP embedding vector dict."""
+        return {
+            "id": self.id,
+            "label": self.label,
+            "vector": b64url_encode(self.vector),
+            "metadata": {
+                "source_domain": self.source_domain,
+                "created_at": self.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            },
+        }
+
+    @property
+    def dimensions(self) -> int:
+        """Infer dimensionality assuming float32 encoding."""
+        return len(self.vector) // 4
+
+    @staticmethod
+    def from_floats(label: str, values: list[float], source_domain: str = "") -> EmbeddingVector:
+        """Create a vector from a list of Python floats.
+
+        Args:
+            label: Human-readable label.
+            values: List of float values.
+            source_domain: Domain tag.
+
+        Returns:
+            An :class:`EmbeddingVector` with float32-packed bytes.
+        """
+        raw = struct.pack(f"{len(values)}f", *values)
+        return EmbeddingVector(label=label, vector=raw, source_domain=source_domain)
+
+
+@dataclass
+class EmbeddingPackage:
+    """Type 1 knowledge: a package of semantic embeddings.
+
+    Attributes:
+        dimensions: Number of dimensions per vector.
+        vectors: List of :class:`EmbeddingVector` entries.
+        encoding: Float encoding format (``"float32"``, ``"float16"``, ``"bfloat16"``).
+        model_family: Architecture family that generated the embeddings.
+        normalization: Normalization scheme (``"l2"`` or ``"none"``).
+    """
+
+    dimensions: int
+    vectors: list[EmbeddingVector]
+    encoding: str = "float32"
+    model_family: str = "transformer"
+    normalization: str = "l2"
+
+    def __post_init__(self) -> None:
+        if self.encoding not in ("float32", "float16", "bfloat16"):
+            raise ValueError(f"Unsupported encoding: {self.encoding}")
+        if self.normalization not in ("l2", "none"):
+            raise ValueError(f"Unsupported normalization: {self.normalization}")
+        if self.dimensions < 1:
+            raise ValueError("Dimensions must be >= 1")
+
+    def to_payload(self) -> dict[str, Any]:
+        """Serialize to an OCP knowledge payload dict.
+
+        Returns:
+            Dict ready to be used as a ``knowledge_share`` message payload.
+        """
+        return {
+            "knowledge_type": "embedding",
+            "encoding": self.encoding,
+            "dimensions": self.dimensions,
+            "model_family": self.model_family,
+            "normalization": self.normalization,
+            "vectors": [v.to_dict() for v in self.vectors],
+        }
+
+
+# ==========================================================================
+# Type 2: Insight Packages
+# ==========================================================================
+
+@dataclass
+class InsightFeature:
+    """A single feature within an insight pattern.
+
+    Attributes:
+        name: Feature identifier (e.g., ``"tx_velocity_5min"``).
+        type: Data type (e.g., ``"float"``, ``"int"``, ``"bool"``).
+        threshold: Threshold value for triggering.
+        direction: Direction relative to threshold (``"above"``, ``"below"``, ``"equal"``).
+    """
+
+    name: str
+    type: str
+    threshold: float | None = None
+    direction: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.direction is not None and self.direction not in ("above", "below", "equal"):
+            raise ValueError(f"Invalid direction: {self.direction}")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to dict."""
+        d: dict[str, Any] = {"name": self.name, "type": self.type}
+        if self.threshold is not None:
+            d["threshold"] = self.threshold
+        if self.direction is not None:
+            d["direction"] = self.direction
+        return d
+
+
+@dataclass
+class InsightPackage:
+    """Type 2 knowledge: a structured insight package.
+
+    Attributes:
+        topic: Subject of the insight.
+        description: Human-readable description of the finding.
+        confidence: Confidence score in [0.0, 1.0].
+        source_agent: DID of the agent that produced this insight.
+        derived_from: Description of the source data (must be anonymized).
+        features: List of :class:`InsightFeature` entries.
+        category: Classification category.
+        evidence_count: Number of evidence samples.
+        recommended_action: Suggested action for recipients.
+        false_positive_rate: Estimated FPR if applicable.
+        methodology: Method used to derive the insight.
+    """
+
+    topic: str
+    description: str
+    confidence: float
+    source_agent: str
+    derived_from: str
+    features: list[InsightFeature] = field(default_factory=list)
+    category: str = ""
+    evidence_count: int = 0
+    recommended_action: str = ""
+    false_positive_rate: float | None = None
+    methodology: str = ""
+
+    def __post_init__(self) -> None:
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+        if self.false_positive_rate is not None and not 0.0 <= self.false_positive_rate <= 1.0:
+            raise ValueError(f"False positive rate must be between 0.0 and 1.0")
+        if not self.topic:
+            raise ValueError("Topic is required")
+        if not self.source_agent:
+            raise ValueError("Source agent DID is required")
+
+    def to_payload(self) -> dict[str, Any]:
+        """Serialize to an OCP knowledge payload dict.
+
+        The ``anonymized`` field is always set to ``True`` per the OCP spec.
+
+        Returns:
+            Dict ready for use as a ``knowledge_share`` message payload.
+        """
+        insight_id = generate_uuid_short("ins-")
+        pattern_id = f"PAT-{uuid.uuid4().hex[:8].upper()}"
+
+        inner_payload: dict[str, Any] = {
+            "pattern_id": pattern_id,
+            "description": self.description,
+            "features": [f.to_dict() for f in self.features],
+            "recommended_action": self.recommended_action,
+        }
+        if self.false_positive_rate is not None:
+            inner_payload["false_positive_rate"] = self.false_positive_rate
+
+        provenance: dict[str, Any] = {
+            "source_agent": self.source_agent,
+            "derived_from": self.derived_from,
+            "timestamp": _utcnow_iso(),
+        }
+        if self.methodology:
+            provenance["methodology"] = self.methodology
+            provenance["reproducibility_hash"] = sha3_256_hex(
+                f"{self.methodology}:{self.topic}".encode()
+            )[:32]
+
+        result: dict[str, Any] = {
+            "knowledge_type": "insight",
+            "insight_id": insight_id,
+            "topic": self.topic,
+            "confidence": self.confidence,
+            "evidence_count": self.evidence_count,
+            "anonymized": True,
+            "payload": inner_payload,
+            "provenance": provenance,
+        }
+        if self.category:
+            result["category"] = self.category
+
+        return result
+
+
+# ==========================================================================
+# Type 3: Model Deltas
+# ==========================================================================
+
+@dataclass
+class ModelDelta:
+    """Type 3 knowledge: privacy-safe model deltas.
+
+    All model deltas **must** include differential privacy parameters.
+    The OCP spec enforces a maximum epsilon of 10.0.
+
+    Attributes:
+        architecture_family: Model architecture (e.g., ``"transformer"``).
+        parameter_count: Human-readable parameter count (e.g., ``"7B"``).
+        target_layers: List of layer identifiers the delta applies to.
+        delta_payload: Raw delta bytes (compressed).
+        source_agent: DID of the producing agent.
+        training_samples: Number of training samples used.
+        epsilon: Differential privacy epsilon.
+        dp_delta: Differential privacy delta.
+        format: Delta format (``"federated_avg"``, ``"federated_sgd"``, ``"lora_delta"``, ``"adapter"``).
+        compression: Compression algorithm (``"none"``, ``"gzip"``, ``"zstd"``).
+        noise_multiplier: DP noise multiplier.
+        dp_mechanism: DP mechanism (``"gaussian"`` or ``"laplace"``).
+    """
+
+    architecture_family: str
+    parameter_count: str
+    target_layers: list[str]
+    delta_payload: bytes
+    source_agent: str
+    training_samples: int
+    epsilon: float
+    dp_delta: float
+    format: str = "federated_avg"
+    compression: str = "gzip"
+    noise_multiplier: float = 1.1
+    dp_mechanism: str = "gaussian"
+
+    def __post_init__(self) -> None:
+        if self.epsilon > MAX_EPSILON:
+            raise ValueError(f"Epsilon must be <= {MAX_EPSILON}, got {self.epsilon}")
+        if self.epsilon <= 0:
+            raise ValueError("Epsilon must be positive")
+        if self.dp_delta <= 0 or self.dp_delta >= 1:
+            raise ValueError("DP delta must be in (0, 1)")
+        if self.format not in ("federated_avg", "federated_sgd", "lora_delta", "adapter"):
+            raise ValueError(f"Unsupported format: {self.format}")
+        if self.compression not in ("none", "gzip", "zstd"):
+            raise ValueError(f"Unsupported compression: {self.compression}")
+        if self.dp_mechanism not in ("gaussian", "laplace"):
+            raise ValueError(f"Unsupported DP mechanism: {self.dp_mechanism}")
+        if self.training_samples < 1:
+            raise ValueError("Training samples must be >= 1")
+
+    def to_payload(self) -> dict[str, Any]:
+        """Serialize to an OCP knowledge payload dict.
+
+        Returns:
+            Dict ready for use as a ``knowledge_share`` message payload.
+        """
+        return {
+            "knowledge_type": "model_delta",
+            "delta_id": generate_uuid_short("md-"),
+            "format": self.format,
+            "compression": self.compression,
+            "architecture": {
+                "family": self.architecture_family,
+                "parameter_count": self.parameter_count,
+                "target_layers": self.target_layers,
+            },
+            "differential_privacy": {
+                "mechanism": self.dp_mechanism,
+                "epsilon": self.epsilon,
+                "delta": self.dp_delta,
+                "noise_multiplier": self.noise_multiplier,
+            },
+            "payload": b64url_encode(self.delta_payload),
+            "provenance": {
+                "source_agent": self.source_agent,
+                "training_samples": self.training_samples,
+                "timestamp": _utcnow_iso(),
+            },
+        }
+
+
+═══ FILE: sdk/python/ocp/trust.py ═══
+
+"""Trust levels, vouching, bond management, and trust score computation.
+
+This module implements OCP's graduated trust model:
+
+- Five trust levels (Anonymous through Certified)
+- Signed vouches between agents
+- Bilateral bonds with scoped permissions
+- Configurable trust score computation
+"""
+
+from __future__ import annotations
+
+import json
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from enum import IntEnum
+from typing import Any
+
+from ocp.constants import MAX_BOND_DURATION_SECONDS, MAX_VOUCH_DURATION_SECONDS
+from ocp.crypto import SigningKeyPair, b64url_encode, generate_uuid_short, sha3_256
+
+
+class TrustLevel(IntEnum):
+    """OCP trust levels (§4.2.1).
+
+    Each level unlocks additional protocol capabilities:
+
+    - ``ANONYMOUS`` — Read-only broadcast access
+    - ``IDENTIFIED`` — Send/receive direct messages
+    - ``VOUCHED`` — Knowledge exchange, bond initiation
+    - ``BONDED`` — Full collaboration, task delegation
+    - ``CERTIFIED`` — Enterprise SLAs, governance voting
+    """
+
+    ANONYMOUS = 0
+    IDENTIFIED = 1
+    VOUCHED = 2
+    BONDED = 3
+    CERTIFIED = 4
+
+
+# ==========================================================================
+# Vouching
+# ==========================================================================
+
+@dataclass
+class Vouch:
+    """A signed endorsement from one agent to another.
+
+    Vouches are the mechanism by which agents advance from Level 1
+    (Identified) to Level 2 (Vouched). An agent needs three or more
+    vouches from Level 2+ agents to advance.
+
+    Attributes:
+        attester_id: DID of the vouching agent.
+        subject_id: DID of the agent being vouched for.
+        domains: List of domains the vouch covers.
+        signing_keys: Attester's signing keys (for producing a signed vouch).
+        issued_at: When the vouch was issued.
+        expires_at: When the vouch expires (max 365 days).
+        revoked: Whether the vouch has been revoked.
+    """
+
+    attester_id: str
+    subject_id: str
+    domains: list[str]
+    signing_keys: SigningKeyPair | None = field(default=None, repr=False)
+    issued_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime | None = None
+    revoked: bool = False
+
+    def __post_init__(self) -> None:
+        if self.attester_id == self.subject_id:
+            raise ValueError("Self-vouching is prohibited by OCP spec §4.2.3")
+
+        if self.expires_at is None:
+            self.expires_at = self.issued_at + timedelta(days=365)
+
+        duration = (self.expires_at - self.issued_at).total_seconds()
+        if duration > MAX_VOUCH_DURATION_SECONDS:
+            raise ValueError(
+                f"Vouch duration ({duration}s) exceeds maximum "
+                f"({MAX_VOUCH_DURATION_SECONDS}s / 365 days)"
+            )
+        if duration <= 0:
+            raise ValueError("Vouch expires_at must be after issued_at")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to a vouch record dict.
+
+        If ``signing_keys`` is set, the record includes a cryptographic
+        signature over the canonical JSON content.
+
+        Returns:
+            JSON-serializable vouch record.
+        """
+        doc: dict[str, Any] = {
+            "vouch_type": "endorsement",
+            "attester": self.attester_id,
+            "subject": self.subject_id,
+            "level": "vouch",
+            "domains": self.domains,
+            "issued_at": self.issued_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "expires_at": self.expires_at.strftime("%Y-%m-%dT%H:%M:%SZ") if self.expires_at else "",
+        }
+
+        if self.signing_keys:
+            canonical = json.dumps(doc, sort_keys=True).encode()
+            sig = self.signing_keys.sign(sha3_256(canonical))
+            doc["signature"] = b64url_encode(sig)
+
+        return doc
+
+    @property
+    def is_expired(self) -> bool:
+        """Check if this vouch has expired."""
+        if self.expires_at is None:
+            return False
+        return datetime.now(timezone.utc) > self.expires_at
+
+    @property
+    def is_valid(self) -> bool:
+        """Check if this vouch is currently valid (not expired, not revoked)."""
+        return not self.is_expired and not self.revoked
+
+    def revoke(self) -> None:
+        """Mark this vouch as revoked."""
+        self.revoked = True
+
+
+# ==========================================================================
+# Bond permissions
+# ==========================================================================
+
+@dataclass
+class BondPermissions:
+    """Scoped permissions within a bond.
+
+    Each permission category can be independently enabled or disabled.
+    The effective permissions of a bond are the intersection of what
+    both parties agree to.
+
+    Attributes:
+        knowledge_share: Whether knowledge exchange is permitted.
+        knowledge_allowed_types: Which knowledge types may be shared.
+        max_payload_bytes: Maximum payload size in bytes.
+        task_delegate: Whether task delegation is permitted.
+        max_concurrent_tasks: Maximum number of concurrent delegated tasks.
+        task_timeout_seconds: Default task timeout.
+        model_delta_share: Whether model delta sharing is permitted.
+    """
+
+    knowledge_share: bool = True
+    knowledge_allowed_types: list[str] = field(
+        default_factory=lambda: ["insight", "embedding"]
+    )
+    max_payload_bytes: int = 10_485_760
+    task_delegate: bool = True
+    max_concurrent_tasks: int = 5
+    task_timeout_seconds: int = 300
+    model_delta_share: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to dict."""
+        return {
+            "knowledge_share": {
+                "enabled": self.knowledge_share,
+                "allowed_types": self.knowledge_allowed_types,
+                "max_payload_bytes": self.max_payload_bytes,
+            },
+            "task_delegate": {
+                "enabled": self.task_delegate,
+                "max_concurrent": self.max_concurrent_tasks,
+                "timeout_seconds": self.task_timeout_seconds,
+            },
+            "model_delta_share": {
+                "enabled": self.model_delta_share,
+            },
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> BondPermissions:
+        """Deserialize from a permissions dict."""
+        ks = data.get("knowledge_share", {})
+        td = data.get("task_delegate", {})
+        md = data.get("model_delta_share", {})
+        return cls(
+            knowledge_share=ks.get("enabled", True),
+            knowledge_allowed_types=ks.get("allowed_types", ["insight", "embedding"]),
+            max_payload_bytes=ks.get("max_payload_bytes", 10_485_760),
+            task_delegate=td.get("enabled", True),
+            max_concurrent_tasks=td.get("max_concurrent", 5),
+            task_timeout_seconds=td.get("timeout_seconds", 300),
+            model_delta_share=md.get("enabled", False),
+        )
+
+    def intersect(self, other: BondPermissions) -> BondPermissions:
+        """Compute the intersection of two permission sets.
+
+        The result enables only what both sets allow, and takes the
+        minimum of any numeric limits.
+
+        Args:
+            other: The other party's proposed permissions.
+
+        Returns:
+            The effective :class:`BondPermissions`.
+        """
+        common_types = [
+            t for t in self.knowledge_allowed_types
+            if t in other.knowledge_allowed_types
+        ]
+        return BondPermissions(
+            knowledge_share=self.knowledge_share and other.knowledge_share,
+            knowledge_allowed_types=common_types,
+            max_payload_bytes=min(self.max_payload_bytes, other.max_payload_bytes),
+            task_delegate=self.task_delegate and other.task_delegate,
+            max_concurrent_tasks=min(self.max_concurrent_tasks, other.max_concurrent_tasks),
+            task_timeout_seconds=min(self.task_timeout_seconds, other.task_timeout_seconds),
+            model_delta_share=self.model_delta_share and other.model_delta_share,
+        )
+
+
+# ==========================================================================
+# Bonds
+# ==========================================================================
+
+@dataclass
+class Bond:
+    """A bilateral trust agreement between two agents.
+
+    Bonds grant elevated collaboration permissions and are time-limited,
+    revocable by either party.
+
+    Attributes:
+        agent_a: DID of the first agent.
+        agent_b: DID of the second agent.
+        permissions: The agreed-upon permission scope.
+        bond_id: Unique bond identifier.
+        established_at: When the bond was established.
+        expires_at: When the bond expires.
+        renewal: Renewal mode (``"auto"``, ``"manual"``, ``"none"``).
+        revoked: Whether the bond has been revoked.
+        revoked_by: DID of the revoking agent, if applicable.
+    """
+
+    agent_a: str
+    agent_b: str
+    permissions: BondPermissions = field(default_factory=BondPermissions)
+    bond_id: str = field(default_factory=lambda: generate_uuid_short("bond-"))
+    established_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime | None = None
+    renewal: str = "manual"
+    revoked: bool = False
+    revoked_by: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.expires_at is None:
+            self.expires_at = self.established_at + timedelta(days=180)
+
+        duration = (self.expires_at - self.established_at).total_seconds()
+        if duration > MAX_BOND_DURATION_SECONDS:
+            raise ValueError(
+                f"Bond duration ({duration}s) exceeds maximum "
+                f"({MAX_BOND_DURATION_SECONDS}s / 365 days)"
+            )
+        if duration <= 0:
+            raise ValueError("Bond expires_at must be after established_at")
+
+        if self.renewal not in ("auto", "manual", "none"):
+            raise ValueError(f"Invalid renewal mode: {self.renewal}")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to a bond record dict."""
+        return {
+            "bond_id": self.bond_id,
+            "agents": [self.agent_a, self.agent_b],
+            "permissions": self.permissions.to_dict(),
+            "established_at": self.established_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "expires_at": self.expires_at.strftime("%Y-%m-%dT%H:%M:%SZ") if self.expires_at else "",
+            "renewal": self.renewal,
+            "signatures": {},
+        }
+
+    @property
+    def is_expired(self) -> bool:
+        """Check if this bond has expired."""
+        if self.expires_at is None:
+            return False
+        return datetime.now(timezone.utc) > self.expires_at
+
+    @property
+    def is_active(self) -> bool:
+        """Check if this bond is currently active (not expired, not revoked)."""
+        return not self.is_expired and not self.revoked
+
+    def permits_knowledge_share(self, knowledge_type: str) -> bool:
+        """Check if this bond allows sharing a given knowledge type.
+
+        Args:
+            knowledge_type: ``"embedding"``, ``"insight"``, or ``"model_delta"``.
+
+        Returns:
+            ``True`` if permitted.
+        """
+        if not self.is_active:
+            return False
+        if not self.permissions.knowledge_share:
+            return False
+        return knowledge_type in self.permissions.knowledge_allowed_types
+
+    def permits_task_delegation(self) -> bool:
+        """Check if this bond allows task delegation."""
+        return self.is_active and self.permissions.task_delegate
+
+    def permits_model_delta(self) -> bool:
+        """Check if this bond allows model delta sharing."""
+        return self.is_active and self.permissions.model_delta_share
+
+    def revoke(self, revoked_by: str) -> None:
+        """Revoke this bond.
+
+        Args:
+            revoked_by: DID of the agent revoking the bond.
+        """
+        self.revoked = True
+        self.revoked_by = revoked_by
+
+    def involves(self, agent_id: str) -> bool:
+        """Check if a given agent is party to this bond."""
+        return agent_id in (self.agent_a, self.agent_b)
+
+    def peer_of(self, agent_id: str) -> str:
+        """Get the DID of the other agent in the bond.
+
+        Args:
+            agent_id: One party's DID.
+
+        Returns:
+            The other party's DID.
+
+        Raises:
+            ValueError: If *agent_id* is not party to this bond.
+        """
+        if agent_id == self.agent_a:
+            return self.agent_b
+        if agent_id == self.agent_b:
+            return self.agent_a
+        raise ValueError(f"{agent_id} is not party to bond {self.bond_id}")
+
+
+# ==========================================================================
+# Trust score
+# ==========================================================================
+
+@dataclass
+class TrustScoreWeights:
+    """Configurable weights for trust score computation.
+
+    Weights MUST sum to 1.0.
+
+    Attributes:
+        identity_verification: Weight for DID verification status.
+        vouch_count: Weight for number of received vouches.
+        bond_count: Weight for number of active bonds.
+        interaction_reputation: Weight for peer interaction ratings.
+        uptime_ratio: Weight for availability ratio.
+    """
+
+    identity_verification: float = 0.20
+    vouch_count: float = 0.25
+    bond_count: float = 0.25
+    interaction_reputation: float = 0.20
+    uptime_ratio: float = 0.10
+
+    def __post_init__(self) -> None:
+        total = (
+            self.identity_verification
+            + self.vouch_count
+            + self.bond_count
+            + self.interaction_reputation
+            + self.uptime_ratio
+        )
+        if abs(total - 1.0) > 0.001:
+            raise ValueError(f"Trust score weights must sum to 1.0, got {total:.4f}")
+
+
+def compute_trust_score(
+    is_verified: bool,
+    vouch_count: int,
+    bond_count: int,
+    interaction_reputation: float,
+    uptime_ratio: float,
+    weights: TrustScoreWeights | None = None,
+) -> float:
+    """Compute an agent's trust score per OCP §4.2.2.
+
+    The score is a weighted sum in the range [0.0, 1.0]:
+
+    .. code-block:: text
+
+        trust_score = w1 * identity_verification
+                    + w2 * min(vouch_count / 10, 1.0)
+                    + w3 * min(bond_count / 5, 1.0)
+                    + w4 * interaction_reputation
+                    + w5 * uptime_ratio
+
+    Args:
+        is_verified: Whether the agent's DID is verified.
+        vouch_count: Number of valid vouches received.
+        bond_count: Number of active bonds.
+        interaction_reputation: Rolling average of peer ratings (0.0–1.0).
+        uptime_ratio: Online time / total time since registration (0.0–1.0).
+        weights: Custom weight configuration. Uses defaults if ``None``.
+
+    Returns:
+        Trust score in [0.0, 1.0], rounded to 4 decimal places.
+    """
+    w = weights or TrustScoreWeights()
+    score = (
+        w.identity_verification * (1.0 if is_verified else 0.0)
+        + w.vouch_count * min(vouch_count / 10.0, 1.0)
+        + w.bond_count * min(bond_count / 5.0, 1.0)
+        + w.interaction_reputation * max(0.0, min(interaction_reputation, 1.0))
+        + w.uptime_ratio * max(0.0, min(uptime_ratio, 1.0))
+    )
+    return round(max(0.0, min(score, 1.0)), 4)
+
+
+def determine_trust_level(
+    is_verified: bool,
+    vouch_count: int,
+    bond_count: int,
+    is_certified: bool = False,
+) -> TrustLevel:
+    """Determine an agent's trust level from its current state.
+
+    Args:
+        is_verified: Whether the DID is verified.
+        vouch_count: Number of valid vouches from Level 2+ agents.
+        bond_count: Number of active bonds.
+        is_certified: Whether OCP Foundation has certified the agent.
+
+    Returns:
+        The appropriate :class:`TrustLevel`.
+    """
+    if is_certified:
+        return TrustLevel.CERTIFIED
+    if bond_count >= 1 and vouch_count >= 3:
+        return TrustLevel.BONDED
+    if vouch_count >= 3:
+        return TrustLevel.VOUCHED
+    if is_verified:
+        return TrustLevel.IDENTIFIED
+    return TrustLevel.ANONYMOUS
+
+
+═══ FILE: sdk/python/ocp/pvl.py ═══
+
+"""Privacy Validation Layer (PVL).
+
+The PVL is a mandatory gatekeeper that validates every knowledge payload
+before transmission over OCP. It enforces:
+
+- PVL-001: No personally identifiable information (PII) in payloads
+- PVL-002: All insights must be marked as anonymized
+- PVL-003: Model deltas must meet differential privacy requirements
+- PVL-004: All knowledge must include provenance information
+- PVL-005: Payload size limits
+- PVL-006: Knowledge type must be permitted by bond (checked externally)
+
+.. warning::
+    The PII scanner in this reference implementation uses regex patterns.
+    Production deployments should augment this with a dedicated NER model
+    for more comprehensive PII detection.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass
+from typing import Any
+
+from ocp.constants import MAX_EPSILON, MAX_PAYLOAD_SIZE
+from ocp.exceptions import OCPPrivacyViolation
+
+
+# ---- PII patterns (reference implementation) ----
+# Production should use a trained NER model for comprehensive detection.
+
+_PII_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), "SSN"),
+    (re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"), "email"),
+    (re.compile(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b"), "phone"),
+    (re.compile(r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b"), "credit_card"),
+    (re.compile(
+        r"\b(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}"
+        r"(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\b"
+    ), "ip_address"),
+    (re.compile(
+        r"\b[A-Z]{1,2}\d{1,2}\s?\d[A-Z]{2}\b", re.IGNORECASE
+    ), "uk_postcode"),
+    (re.compile(r"\b\d{3}-\d{4}-\d{4}\b"), "jp_phone"),
+]
+
+
+@dataclass(frozen=True)
+class PVLResult:
+    """Result of a Privacy Validation Layer check.
+
+    Attributes:
+        passed: ``True`` if the payload passed all checks.
+        rejection_code: PVL code if rejected (e.g., ``"PVL-001"``).
+        rejection_reason: Human-readable explanation if rejected.
+    """
+
+    passed: bool
+    rejection_code: str | None = None
+    rejection_reason: str | None = None
+
+
+def _scan_for_pii(text: str) -> list[tuple[str, str]]:
+    """Scan text for PII patterns.
+
+    Args:
+        text: Text to scan.
+
+    Returns:
+        List of ``(matched_text, pii_type)`` tuples.
+    """
+    findings: list[tuple[str, str]] = []
+    for pattern, pii_type in _PII_PATTERNS:
+        for match in pattern.finditer(text):
+            findings.append((match.group(), pii_type))
+    return findings
+
+
+def _deep_extract_strings(obj: Any, depth: int = 0, max_depth: int = 20) -> str:
+    """Recursively extract all string values from a nested structure.
+
+    Args:
+        obj: Any JSON-compatible object.
+        depth: Current recursion depth.
+        max_depth: Maximum recursion depth to prevent stack overflow.
+
+    Returns:
+        All string values concatenated with spaces.
+    """
+    if depth > max_depth:
+        return ""
+    if isinstance(obj, str):
+        return obj
+    if isinstance(obj, dict):
+        return " ".join(_deep_extract_strings(v, depth + 1, max_depth) for v in obj.values())
+    if isinstance(obj, (list, tuple)):
+        return " ".join(_deep_extract_strings(item, depth + 1, max_depth) for item in obj)
+    return ""
+
+
+def validate_knowledge_payload(
+    payload: dict[str, Any],
+    max_payload_bytes: int = MAX_PAYLOAD_SIZE,
+) -> PVLResult:
+    """Run all PVL checks on a knowledge payload.
+
+    Checks are executed in order of severity:
+    PVL-005 (size) → PVL-004 (provenance) → PVL-002 (anonymization)
+    → PVL-003 (differential privacy) → PVL-001 (PII scan).
+
+    Args:
+        payload: Knowledge payload dict.
+        max_payload_bytes: Maximum allowed payload size.
+
+    Returns:
+        A :class:`PVLResult` indicating pass or fail.
+    """
+    # PVL-005: Size check
+    payload_bytes = len(json.dumps(payload).encode("utf-8"))
+    if payload_bytes > max_payload_bytes:
+        return PVLResult(
+            passed=False,
+            rejection_code="PVL-005",
+            rejection_reason=(
+                f"Payload size ({payload_bytes:,} bytes) exceeds limit "
+                f"({max_payload_bytes:,} bytes)"
+            ),
+        )
+
+    knowledge_type = payload.get("knowledge_type")
+
+    # PVL-004: Provenance check (required for insights and model deltas)
+    if knowledge_type in ("insight", "model_delta"):
+        prov = payload.get("provenance")
+        if not prov or not prov.get("source_agent") or not prov.get("timestamp"):
+            return PVLResult(
+                passed=False,
+                rejection_code="PVL-004",
+                rejection_reason="Missing or incomplete provenance information",
+            )
+
+    # PVL-002: Anonymization check (required for insights)
+    if knowledge_type == "insight" and not payload.get("anonymized", False):
+        return PVLResult(
+            passed=False,
+            rejection_code="PVL-002",
+            rejection_reason=(
+                "Insight payload must have anonymized=true. "
+                "OCP prohibits sharing non-anonymized knowledge."
+            ),
+        )
+
+    # PVL-003: Differential privacy check (required for model deltas)
+    if knowledge_type == "model_delta":
+        dp = payload.get("differential_privacy", {})
+        if not dp:
+            return PVLResult(
+                passed=False,
+                rejection_code="PVL-003",
+                rejection_reason="Model delta missing differential_privacy parameters",
+            )
+        eps = dp.get("epsilon", float("inf"))
+        if eps > MAX_EPSILON:
+            return PVLResult(
+                passed=False,
+                rejection_code="PVL-003",
+                rejection_reason=(
+                    f"Epsilon ({eps}) exceeds maximum ({MAX_EPSILON}). "
+                    "Increase noise or reduce privacy budget."
+                ),
+            )
+        if "delta" not in dp:
+            return PVLResult(
+                passed=False,
+                rejection_code="PVL-003",
+                rejection_reason="Missing differential_privacy.delta parameter",
+            )
+        if "mechanism" not in dp:
+            return PVLResult(
+                passed=False,
+                rejection_code="PVL-003",
+                rejection_reason="Missing differential_privacy.mechanism parameter",
+            )
+
+    # PVL-001: PII scan (all knowledge types)
+    all_text = _deep_extract_strings(payload)
+    pii_findings = _scan_for_pii(all_text)
+    if pii_findings:
+        types_found = sorted({t for _, t in pii_findings})
+        return PVLResult(
+            passed=False,
+            rejection_code="PVL-001",
+            rejection_reason=f"PII detected in payload: {', '.join(types_found)}",
+        )
+
+    return PVLResult(passed=True)
+
+
+def enforce_pvl(
+    payload: dict[str, Any],
+    max_payload_bytes: int = MAX_PAYLOAD_SIZE,
+) -> None:
+    """Validate a payload and raise on failure.
+
+    Convenience wrapper around :func:`validate_knowledge_payload` that
+    raises :class:`OCPPrivacyViolation` instead of returning a result.
+
+    Args:
+        payload: Knowledge payload dict.
+        max_payload_bytes: Maximum allowed payload size.
+
+    Raises:
+        OCPPrivacyViolation: If any PVL check fails.
+    """
+    result = validate_knowledge_payload(payload, max_payload_bytes)
+    if not result.passed:
+        raise OCPPrivacyViolation(
+            message=result.rejection_reason or "PVL validation failed",
+            pvl_code=result.rejection_code or "PVL-000",
+        )
+
+
+═══ FILE: sdk/python/ocp/recovery.py ═══
+
+"""Key recovery via Shamir's Secret Sharing over GF(2^8).
+
+This module implements the OCP key recovery mechanism (§8.3), providing:
+
+- Share generation: split a private key into ``n`` shares
+- Share reconstruction: recover the key from any ``t`` shares
+- Encrypted share distribution to custodians
+- Fingerprint-based verification after reconstruction
+
+The scheme uses Shamir's Secret Sharing over the Galois field GF(2^8)
+with the AES irreducible polynomial (x^8 + x^4 + x^3 + x + 1).
+
+**Security properties:**
+
+- ``t-1`` compromised custodians learn zero information about the key
+- No master key or backdoor exists
+- Recovery uses ephemeral keys for forward secrecy
+- Shares are encrypted per-custodian via ECDH + AES-256-GCM
+"""
+
+from __future__ import annotations
+
+import secrets
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
+from ocp.constants import (
+    DEFAULT_RECOVERY_SHARES,
+    DEFAULT_RECOVERY_THRESHOLD,
+    HKDF_INFO_RECOVERY,
+    KEY_ROTATION_RECOMMENDED_SECONDS,
+    MAX_RECOVERY_SHARES,
+)
+from ocp.crypto import (
+    EncryptionKeyPair,
+    SigningKeyPair,
+    aes_gcm_decrypt,
+    aes_gcm_encrypt,
+    b64url_decode,
+    b64url_encode,
+    ecdh_derive_key,
+    sha3_256_hex,
+)
+from ocp.exceptions import OCPRecoveryError
+
+
+# ==========================================================================
+# GF(2^8) arithmetic
+# ==========================================================================
+
+_EXP = [0] * 512
+_LOG = [0] * 256
+_INITIALIZED = False
+
+
+def _init_gf256_tables() -> None:
+    """Initialize GF(2^8) exp/log lookup tables.
+
+    Uses the AES irreducible polynomial: x^8 + x^4 + x^3 + x + 1 = 0x11B.
+    """
+    global _INITIALIZED
+    if _INITIALIZED:
+        return
+
+    x = 1
+    for i in range(255):
+        _EXP[i] = x
+        _LOG[x] = i
+        x <<= 1
+        if x & 0x100:
+            x ^= 0x11B
+    for i in range(255, 512):
+        _EXP[i] = _EXP[i - 255]
+
+    _INITIALIZED = True
+
+
+def _gf_mul(a: int, b: int) -> int:
+    """Multiply two elements in GF(2^8)."""
+    if a == 0 or b == 0:
+        return 0
+    _init_gf256_tables()
+    return _EXP[_LOG[a] + _LOG[b]]
+
+
+def _gf_inv(a: int) -> int:
+    """Multiplicative inverse in GF(2^8)."""
+    if a == 0:
+        raise ZeroDivisionError("No inverse for 0 in GF(2^8)")
+    _init_gf256_tables()
+    return _EXP[255 - _LOG[a]]
+
+
+def _gf_add(a: int, b: int) -> int:
+    """Add (XOR) two elements in GF(2^8)."""
+    return a ^ b
+
+
+# ==========================================================================
+# Polynomial evaluation
+# ==========================================================================
+
+def _eval_polynomial(coeffs: list[int], x: int) -> int:
+    """Evaluate a polynomial at point x in GF(2^8).
+
+    Args:
+        coeffs: Coefficients, where coeffs[0] is the constant (secret).
+        x: Evaluation point (must be non-zero for shares).
+
+    Returns:
+        The polynomial value at x.
+    """
+    result = 0
+    for c in reversed(coeffs):
+        result = _gf_add(_gf_mul(result, x), c)
+    return result
+
+
+# ==========================================================================
+# Shamir's Secret Sharing
+# ==========================================================================
+
+def split_secret(
+    secret: bytes,
+    threshold: int = DEFAULT_RECOVERY_THRESHOLD,
+    num_shares: int = DEFAULT_RECOVERY_SHARES,
+) -> list[tuple[int, bytes]]:
+    """Split a secret into Shamir shares over GF(2^8).
+
+    For each byte of the secret, a random polynomial of degree
+    ``threshold - 1`` is constructed with the byte as the constant
+    term, and evaluated at ``num_shares`` distinct non-zero points.
+
+    Args:
+        secret: The secret bytes to split (e.g., 32-byte Ed25519 private key).
+        threshold: Minimum shares needed to reconstruct (``t``). Must be >= 2.
+        num_shares: Total shares to generate (``n``). Must be >= threshold, <= 255.
+
+    Returns:
+        List of ``(share_index, share_bytes)`` tuples. Indices are 1-based.
+
+    Raises:
+        ValueError: If parameters violate OCP constraints.
+    """
+    _init_gf256_tables()
+
+    if threshold < 2:
+        raise ValueError("Threshold must be >= 2 (threshold=1 is prohibited by OCP)")
+    if num_shares < threshold:
+        raise ValueError(f"num_shares ({num_shares}) must be >= threshold ({threshold})")
+    if num_shares > MAX_RECOVERY_SHARES:
+        raise ValueError(f"num_shares must be <= {MAX_RECOVERY_SHARES}")
+    if len(secret) == 0:
+        raise ValueError("Secret must not be empty")
+
+    shares: list[list[int]] = [[] for _ in range(num_shares)]
+
+    for byte_val in secret:
+        coeffs = [byte_val] + [secrets.randbelow(256) for _ in range(threshold - 1)]
+        for i in range(num_shares):
+            x = i + 1  # x ∈ {1, 2, ..., n}, never 0
+            shares[i].append(_eval_polynomial(coeffs, x))
+
+    return [(i + 1, bytes(shares[i])) for i in range(num_shares)]
+
+
+def reconstruct_secret(shares: list[tuple[int, bytes]]) -> bytes:
+    """Reconstruct a secret from Shamir shares via Lagrange interpolation.
+
+    Evaluates the Lagrange interpolating polynomial at x=0 for each
+    byte position independently over GF(2^8).
+
+    Args:
+        shares: List of ``(share_index, share_bytes)`` tuples.
+                Must contain at least ``threshold`` shares.
+
+    Returns:
+        The reconstructed secret bytes.
+
+    Raises:
+        ValueError: If shares are inconsistent or duplicated.
+    """
+    _init_gf256_tables()
+
+    if len(shares) < 2:
+        raise ValueError("Need at least 2 shares to reconstruct")
+
+    num_bytes = len(shares[0][1])
+    for idx, s in shares:
+        if len(s) != num_bytes:
+            raise ValueError(
+                f"Share {idx} length ({len(s)}) does not match "
+                f"expected length ({num_bytes})"
+            )
+
+    xs = [s[0] for s in shares]
+    if len(set(xs)) != len(xs):
+        raise ValueError("Duplicate share indices detected")
+
+    result = bytearray(num_bytes)
+
+    for byte_pos in range(num_bytes):
+        ys = [s[1][byte_pos] for s in shares]
+        secret_byte = 0
+
+        for i, (xi, yi) in enumerate(zip(xs, ys)):
+            # Lagrange basis polynomial l_i evaluated at x=0
+            num = 1
+            den = 1
+            for j, xj in enumerate(xs):
+                if i != j:
+                    num = _gf_mul(num, xj)
+                    den = _gf_mul(den, _gf_add(xi, xj))
+            if den == 0:
+                raise ValueError(f"Degenerate share set at index {xi}")
+            basis = _gf_mul(num, _gf_inv(den))
+            secret_byte = _gf_add(secret_byte, _gf_mul(yi, basis))
+
+        result[byte_pos] = secret_byte
+
+    return bytes(result)
+
+
+# ==========================================================================
+# Recovery Share record
+# ==========================================================================
+
+@dataclass
+class RecoveryShare:
+    """A single recovery share with metadata.
+
+    Attributes:
+        agent_id: The agent this share belongs to.
+        share_index: 1-based index of this share.
+        share_data: Raw share bytes.
+        threshold: Minimum shares needed to reconstruct.
+        total_shares: Total number of shares generated.
+        key_fingerprint: First 16 hex chars of SHA-3-256(public_key).
+        created_at: When the share was generated.
+        expires_at: When the share expires.
+        share_id: Unique share identifier.
+    """
+
+    agent_id: str
+    share_index: int
+    share_data: bytes
+    threshold: int
+    total_shares: int
+    key_fingerprint: str
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    expires_at: datetime | None = None
+    share_id: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.share_id:
+            short_id = self.agent_id.split("agent-")[-1][:8] if "agent-" in self.agent_id else "unknown"
+            self.share_id = f"share-{short_id}-{self.share_index}"
+        if self.expires_at is None:
+            self.expires_at = self.created_at + timedelta(
+                seconds=KEY_ROTATION_RECOMMENDED_SECONDS
+            )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to an OCP recovery share record dict."""
+        return {
+            "share_id": self.share_id,
+            "agent_id": self.agent_id,
+            "scheme": "shamir-sss-gf256",
+            "threshold": self.threshold,
+            "total_shares": self.total_shares,
+            "share_index": self.share_index,
+            "share_data": b64url_encode(self.share_data),
+            "key_fingerprint": self.key_fingerprint,
+            "created_at": self.created_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "expires_at": (
+                self.expires_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+                if self.expires_at else None
+            ),
+            "encryption": {
+                "algorithm": "AES-256-GCM",
+                "note": "Share is encrypted to the custodian's public key before transmission.",
+            },
+        }
+
+    @property
+    def is_expired(self) -> bool:
+        """Check if this share has expired."""
+        if self.expires_at is None:
+            return False
+        return datetime.now(timezone.utc) > self.expires_at
+
+
+# ==========================================================================
+# Recovery Manager
+# ==========================================================================
+
+class RecoveryManager:
+    """Manages the full key recovery lifecycle.
+
+    Handles share generation, encrypted distribution to custodians,
+    and reconstruction with fingerprint verification.
+
+    Usage::
+
+        mgr = RecoveryManager(identity.agent_id, identity.signing_keys)
+
+        # Generate shares
+        shares = mgr.generate_shares(threshold=3, num_shares=5)
+
+        # Encrypt for each custodian
+        for share, custodian_pub in zip(shares, custodian_public_keys):
+            encrypted = mgr.encrypt_share_for_custodian(share, custodian_pub)
+            # ... send encrypted to custodian ...
+
+        # Later: recover
+        collected = [(idx, data) for idx, data in custodian_responses]
+        private_key = RecoveryManager.reconstruct(collected, mgr.key_fingerprint)
+
+    Args:
+        agent_id: The agent's DID.
+        signing_keys: The agent's current signing keypair.
+    """
+
+    def __init__(self, agent_id: str, signing_keys: SigningKeyPair) -> None:
+        self._agent_id = agent_id
+        self._signing_keys = signing_keys
+        self._key_fingerprint = sha3_256_hex(signing_keys.public_key_bytes)[:16]
+
+    @property
+    def key_fingerprint(self) -> str:
+        """First 16 hex chars of SHA-3-256(public_key)."""
+        return self._key_fingerprint
+
+    @property
+    def agent_id(self) -> str:
+        return self._agent_id
+
+    def generate_shares(
+        self,
+        threshold: int = DEFAULT_RECOVERY_THRESHOLD,
+        num_shares: int = DEFAULT_RECOVERY_SHARES,
+    ) -> list[RecoveryShare]:
+        """Split the agent's signing private key into Shamir shares.
+
+        Args:
+            threshold: Minimum shares required to reconstruct.
+            num_shares: Total shares to produce.
+
+        Returns:
+            List of :class:`RecoveryShare` objects ready for distribution.
+        """
+        raw_private = self._signing_keys.private_key_bytes
+        raw_shares = split_secret(raw_private, threshold, num_shares)
+
+        return [
+            RecoveryShare(
+                agent_id=self._agent_id,
+                share_index=idx,
+                share_data=data,
+                threshold=threshold,
+                total_shares=num_shares,
+                key_fingerprint=self._key_fingerprint,
+            )
+            for idx, data in raw_shares
+        ]
+
+    def encrypt_share_for_custodian(
+        self,
+        share: RecoveryShare,
+        custodian_public_key_bytes: bytes,
+    ) -> dict[str, str]:
+        """Encrypt a share for a specific custodian.
+
+        Uses an ephemeral X25519 keypair and ECDH + AES-256-GCM.
+
+        Args:
+            share: The recovery share to encrypt.
+            custodian_public_key_bytes: Custodian's 32-byte X25519 public key.
+
+        Returns:
+            Dict with ``ephemeral_public_key``, ``nonce``, and
+            ``encrypted_share`` (all base64url-encoded).
+        """
+        ephemeral = EncryptionKeyPair.generate()
+        aes_key = ecdh_derive_key(
+            ephemeral.private_key,
+            custodian_public_key_bytes,
+            info=HKDF_INFO_RECOVERY,
+        )
+        nonce, ct = aes_gcm_encrypt(aes_key, share.share_data)
+
+        return {
+            "ephemeral_public_key": ephemeral.public_key_b64url,
+            "nonce": b64url_encode(nonce),
+            "encrypted_share": b64url_encode(ct),
+        }
+
+    @staticmethod
+    def decrypt_share(
+        encrypted: dict[str, str],
+        custodian_private_key: Any,  # X25519PrivateKey
+    ) -> bytes:
+        """Decrypt a share received from a custodian.
+
+        Args:
+            encrypted: Dict with ``ephemeral_public_key``, ``nonce``,
+                       ``encrypted_share``.
+            custodian_private_key: The custodian's X25519 private key.
+
+        Returns:
+            Decrypted share bytes.
+        """
+        eph_pub = b64url_decode(encrypted["ephemeral_public_key"])
+        aes_key = ecdh_derive_key(
+            custodian_private_key,
+            eph_pub,
+            info=HKDF_INFO_RECOVERY,
+        )
+        nonce = b64url_decode(encrypted["nonce"])
+        ct = b64url_decode(encrypted["encrypted_share"])
+        return aes_gcm_decrypt(aes_key, nonce, ct)
+
+    @staticmethod
+    def reconstruct(
+        shares: list[tuple[int, bytes]],
+        expected_fingerprint: str,
+    ) -> bytes:
+        """Reconstruct the private key from collected shares.
+
+        After reconstruction, the derived public key's fingerprint is
+        compared against the expected value to verify correctness.
+
+        Args:
+            shares: List of ``(share_index, share_bytes)`` from custodians.
+            expected_fingerprint: First 16 hex chars of SHA-3-256(public_key).
+
+        Returns:
+            Reconstructed 32-byte Ed25519 private key.
+
+        Raises:
+            OCPRecoveryError: If reconstruction or verification fails.
+        """
+        raw_private = reconstruct_secret(shares)
+
+        # Verify: derive the public key and check the fingerprint
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+
+        try:
+            priv = Ed25519PrivateKey.from_private_bytes(raw_private)
+        except Exception as e:
+            raise OCPRecoveryError(
+                f"Reconstructed bytes are not a valid Ed25519 key: {e}"
+            )
+
+        pub_bytes = priv.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+        actual_fp = sha3_256_hex(pub_bytes)[:16]
+
+        if actual_fp != expected_fingerprint:
+            raise OCPRecoveryError(
+                f"Key fingerprint mismatch: expected {expected_fingerprint}, "
+                f"got {actual_fp}. Shares may be corrupted or from different keys."
+            )
+
+        return raw_private
+
+    def build_recovery_request_payload(
+        self,
+        ephemeral_encryption_key: EncryptionKeyPair,
+        secondary_key: SigningKeyPair | None = None,
+    ) -> dict[str, Any]:
+        """Build a ``recovery_request`` message payload.
+
+        Args:
+            ephemeral_encryption_key: Fresh X25519 keypair for response encryption.
+            secondary_key: Pre-registered secondary recovery signing key.
+
+        Returns:
+            Payload dict for a ``recovery_request`` OCPUMF message.
+        """
+        payload: dict[str, Any] = {
+            "agent_id": self._agent_id,
+            "key_fingerprint": self._key_fingerprint,
+            "ephemeral_public_key": ephemeral_encryption_key.public_key_b64url,
+        }
+
+        if secondary_key:
+            sign_data = (
+                f"{self._agent_id}||{self._key_fingerprint}||"
+                f"{ephemeral_encryption_key.public_key_b64url}"
+            ).encode()
+            from ocp.crypto import sha3_256
+            sig = secondary_key.sign(sha3_256(sign_data))
+            payload["proof"] = {
+                "type": "secondary_key_signature",
+                "secondary_key_id": f"{self._agent_id}#recovery-key-1",
+                "signature": b64url_encode(sig),
+            }
+        else:
+            payload["proof"] = {
+                "type": "out_of_band",
+                "note": "Identity must be verified through external channel",
+            }
+
+        return payload
+
+
+═══ FILE: sdk/python/ocp/transport.py ═══
+
+"""Transport layer — WebSocket and HTTPS transports.
+
+OCP supports multiple transport mechanisms. This module implements the
+two most common:
+
+- **WebSocket** (``ocp-ws``): Real-time bidirectional, recommended for
+  persistent connections.
+- **HTTPS** (``ocp-http``): Request-response, firewall-friendly.
+
+Both transports enforce TLS and implement the OCP authentication
+handshake or header scheme.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any, AsyncIterator, Callable
+
+import httpx
+import websockets
+from websockets.asyncio.client import ClientConnection
+
+from ocp.constants import (
+    AUTH_HANDSHAKE_TIMEOUT,
+    MAX_RETRY_COUNT,
+    RETRY_BASE_DELAY,
+    WS_SUBPROTOCOL,
+)
+from ocp.crypto import SigningKeyPair, b64url_encode, generate_nonce, sha3_256
+from ocp.exceptions import (
+    OCPAuthError,
+    OCPRateLimitError,
+    OCPTimeoutError,
+    OCPTransportError,
+)
+
+logger = logging.getLogger("ocp.transport")
+
+
+@dataclass
+class TransportConfig:
+    """Configuration for an OCP transport.
+
+    Attributes:
+        url: Endpoint URL.
+        transport_type: Transport identifier (``"ocp-ws"`` or ``"ocp-http"``).
+        connect_timeout: Connection timeout in seconds.
+        request_timeout: Per-request timeout in seconds.
+        max_retries: Maximum retry count on delivery failure.
+        retry_base_delay: Base delay for exponential backoff.
+    """
+
+    url: str
+    transport_type: str = "ocp-ws"
+    connect_timeout: float = 10.0
+    request_timeout: float = 30.0
+    max_retries: int = MAX_RETRY_COUNT
+    retry_base_delay: float = RETRY_BASE_DELAY
+
+
+# ==========================================================================
+# WebSocket transport
+# ==========================================================================
+
+class WebSocketTransport:
+    """OCP WebSocket transport (``ocp-ws``).
+
+    Provides real-time bidirectional communication with auth handshake,
+    message send/receive, and automatic reconnection.
+
+    Args:
+        config: Transport configuration.
+        agent_id: The agent's DID.
+        signing_keys: The agent's Ed25519 keypair.
+    """
+
+    def __init__(
+        self,
+        config: TransportConfig,
+        agent_id: str,
+        signing_keys: SigningKeyPair,
+    ) -> None:
+        self._config = config
+        self._agent_id = agent_id
+        self._signing_keys = signing_keys
+        self._conn: ClientConnection | None = None
+        self._session_id: str | None = None
+        self._connected: bool = False
+        self._message_handlers: list[Callable[[dict[str, Any]], Any]] = []
+
+    @property
+    def is_connected(self) -> bool:
+        """Whether the transport has an active connection."""
+        return self._connected and self._conn is not None
+
+    @property
+    def session_id(self) -> str | None:
+        """The current session ID, or ``None`` if not connected."""
+        return self._session_id
+
+    async def connect(self) -> None:
+        """Establish WebSocket connection and perform auth handshake.
+
+        Raises:
+            OCPTransportError: If the connection fails.
+            OCPAuthError: If the auth handshake is rejected.
+        """
+        try:
+            self._conn = await websockets.connect(
+                self._config.url,
+                subprotocols=[WS_SUBPROTOCOL],
+                open_timeout=self._config.connect_timeout,
+            )
+            logger.info("WebSocket connected to %s", self._config.url)
+        except Exception as e:
+            raise OCPTransportError(
+                f"WebSocket connection failed: {e}", code="OCP-502"
+            )
+
+        # Auth handshake
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        nonce = generate_nonce()
+        sign_data = f"{self._agent_id}||{ts}||{nonce}".encode()
+        sig = self._signing_keys.sign(sha3_256(sign_data))
+
+        handshake = {
+            "frame_type": "auth_handshake",
+            "agent_id": self._agent_id,
+            "timestamp": ts,
+            "nonce": nonce,
+            "signature": b64url_encode(sig),
+        }
+        await self._conn.send(json.dumps(handshake))
+
+        try:
+            raw = await asyncio.wait_for(
+                self._conn.recv(),
+                timeout=AUTH_HANDSHAKE_TIMEOUT,
+            )
+            result = json.loads(raw)
+
+            if result.get("status") != "accepted":
+                reason = result.get("reason", "unknown")
+                raise OCPAuthError(f"Auth rejected: {reason}", code="OCP-401")
+
+            self._session_id = result.get("session_id")
+            self._connected = True
+            logger.info("Auth handshake accepted, session=%s", self._session_id)
+
+        except asyncio.TimeoutError:
+            await self._conn.close()
+            raise OCPTimeoutError("Auth handshake timed out")
+        except OCPAuthError:
+            await self._conn.close()
+            raise
+        except Exception as e:
+            await self._conn.close()
+            raise OCPAuthError(f"Auth handshake failed: {e}", code="OCP-401")
+
+    async def send(self, message: dict[str, Any]) -> None:
+        """Send an OCPUMF message over the WebSocket.
+
+        Args:
+            message: A signed OCPUMF message dict.
+
+        Raises:
+            OCPTransportError: If not connected or send fails.
+        """
+        if not self.is_connected:
+            raise OCPTransportError("Not connected", code="OCP-500")
+        try:
+            await self._conn.send(json.dumps(message))  # type: ignore
+        except Exception as e:
+            self._connected = False
+            raise OCPTransportError(f"Send failed: {e}", code="OCP-502")
+
+    async def receive(self) -> dict[str, Any]:
+        """Receive a single OCPUMF message.
+
+        Returns:
+            Parsed OCPUMF message dict.
+
+        Raises:
+            OCPTransportError: If not connected or receive fails.
+        """
+        if not self.is_connected:
+            raise OCPTransportError("Not connected", code="OCP-500")
+        try:
+            raw = await self._conn.recv()  # type: ignore
+            return json.loads(raw)
+        except Exception as e:
+            self._connected = False
+            raise OCPTransportError(f"Receive failed: {e}", code="OCP-502")
+
+    async def listen(self) -> AsyncIterator[dict[str, Any]]:
+        """Async iterator over incoming messages.
+
+        Yields:
+            Parsed OCPUMF message dicts.
+        """
+        if not self.is_connected:
+            raise OCPTransportError("Not connected", code="OCP-500")
+        try:
+            async for raw in self._conn:  # type: ignore
+                msg = json.loads(raw)
+                yield msg
+        except websockets.exceptions.ConnectionClosed:
+            self._connected = False
+            logger.warning("WebSocket connection closed")
+
+    def on_message(self, handler: Callable[[dict[str, Any]], Any]) -> None:
+        """Register a message handler callback.
+
+        Args:
+            handler: Callable that receives a parsed OCPUMF message dict.
+        """
+        self._message_handlers.append(handler)
+
+    async def close(self) -> None:
+        """Close the WebSocket connection."""
+        self._connected = False
+        if self._conn:
+            try:
+                await self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
+        logger.info("WebSocket transport closed")
+
+
+# ==========================================================================
+# HTTPS transport
+# ==========================================================================
+
+class HTTPTransport:
+    """OCP HTTPS transport (``ocp-http``).
+
+    Provides request-response communication with the ``OCP-Ed25519``
+    authorization header scheme.
+
+    Args:
+        config: Transport configuration.
+        agent_id: The agent's DID.
+        signing_keys: The agent's Ed25519 keypair.
+    """
+
+    def __init__(
+        self,
+        config: TransportConfig,
+        agent_id: str,
+        signing_keys: SigningKeyPair,
+    ) -> None:
+        self._config = config
+        self._agent_id = agent_id
+        self._signing_keys = signing_keys
+        self._client = httpx.AsyncClient(
+            timeout=config.request_timeout,
+            http2=True,
+        )
+
+    def _auth_header(self) -> str:
+        """Generate the ``OCP-Ed25519`` authorization header value."""
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        sign_data = f"{self._agent_id}||{ts}".encode()
+        sig = self._signing_keys.sign(sha3_256(sign_data))
+        return f"OCP-Ed25519 {self._agent_id}:{ts}:{b64url_encode(sig)}"
+
+    async def send(
+        self,
+        message: dict[str, Any],
+        retry: bool = True,
+    ) -> dict[str, Any]:
+        """Send a message via HTTPS POST.
+
+        Args:
+            message: A signed OCPUMF message dict.
+            retry: Whether to retry on transient failures.
+
+        Returns:
+            Response body as dict (empty dict for 202 Accepted).
+
+        Raises:
+            OCPRateLimitError: If rate-limited (429).
+            OCPTransportError: On other HTTP errors.
+        """
+        last_error: Exception | None = None
+        attempts = self._config.max_retries if retry else 1
+
+        for attempt in range(attempts):
+            try:
+                resp = await self._client.post(
+                    self._config.url,
+                    json=message,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Authorization": self._auth_header(),
+                        "X-OCP-Version": "1.0",
+                    },
+                )
+
+                if resp.status_code == 429:
+                    retry_after = int(resp.headers.get("Retry-After", "60"))
+                    raise OCPRateLimitError("Rate limited", retry_after=retry_after)
+
+                if resp.status_code == 202:
+                    return {}
+
+                if resp.status_code >= 400:
+                    raise OCPTransportError(
+                        f"HTTP {resp.status_code}: {resp.text}",
+                        code=f"OCP-{resp.status_code}",
+                    )
+
+                return resp.json() if resp.text else {}
+
+            except (OCPRateLimitError, OCPTransportError):
+                raise
+            except Exception as e:
+                last_error = e
+                if attempt < attempts - 1:
+                    delay = self._config.retry_base_delay * (2 ** attempt)
+                    logger.warning(
+                        "HTTP attempt %d failed (%s), retrying in %.1fs",
+                        attempt + 1, e, delay,
+                    )
+                    await asyncio.sleep(delay)
+
+        raise OCPTransportError(
+            f"HTTP request failed after {attempts} attempts: {last_error}",
+            code="OCP-502",
+        )
+
+    async def close(self) -> None:
+        """Close the HTTP client."""
+        await self._client.aclose()
+        logger.info("HTTP transport closed")
+
+
+═══ FILE: sdk/python/ocp/registry.py ═══
+
+"""Agent Registry client.
+
+Provides methods for agent registration, peer discovery, and DID
+resolution against an OCP Agent Registry.
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from typing import Any
+
+import httpx
+
+from ocp.constants import REGISTRY_RECORD_DEFAULT_TTL
+from ocp.exceptions import OCPAgentNotFoundError, OCPTransportError
+
+logger = logging.getLogger("ocp.registry")
+
+
+@dataclass
+class RegistryConfig:
+    """Registry client configuration.
+
+    Attributes:
+        base_url: Base URL of the registry API.
+        timeout: HTTP request timeout in seconds.
+    """
+
+    base_url: str = "https://registry.opencognitionprotocol.org/ocp/v1"
+    timeout: float = 15.0
+
+
+@dataclass
+class AgentRecord:
+    """An agent's registry record.
+
+    Attributes:
+        agent_id: The agent's DID.
+        display_name: Human-readable name.
+        capabilities: List of capability dicts.
+        domains: List of domain identifiers.
+        endpoints: List of endpoint dicts.
+        trust_level: Current trust level (0–4).
+        version: Agent software version.
+        status: Registration status.
+        extensions: Supported OCP extensions.
+    """
+
+    agent_id: str
+    display_name: str
+    capabilities: list[dict[str, Any]]
+    domains: list[str]
+    endpoints: list[dict[str, Any]]
+    trust_level: int = 0
+    version: str = "1.0.0"
+    status: str = "active"
+    extensions: list[dict[str, Any]] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to a registry record dict."""
+        return {
+            "agent_id": self.agent_id,
+            "display_name": self.display_name,
+            "version": self.version,
+            "capabilities": self.capabilities,
+            "domains": self.domains,
+            "endpoints": self.endpoints,
+            "trust_level": self.trust_level,
+            "status": self.status,
+            "extensions": self.extensions,
+            "ttl": REGISTRY_RECORD_DEFAULT_TTL,
+        }
+
+
+class RegistryClient:
+    """Client for the OCP Agent Registry.
+
+    Handles agent registration, peer discovery, and DID resolution.
+
+    Args:
+        config: Registry configuration. Uses defaults if ``None``.
+    """
+
+    def __init__(self, config: RegistryConfig | None = None) -> None:
+        self._config = config or RegistryConfig()
+        self._client = httpx.AsyncClient(
+            timeout=self._config.timeout,
+            http2=True,
+        )
+
+    async def register(self, record: AgentRecord, signature: str) -> dict[str, Any]:
+        """Register or update an agent record.
+
+        Args:
+            record: The agent record to register.
+            signature: Base64url Ed25519 signature over the record.
+
+        Returns:
+            Registry response dict.
+
+        Raises:
+            OCPTransportError: If registration fails.
+        """
+        payload = record.to_dict()
+        payload["signature"] = signature
+
+        try:
+            resp = await self._client.post(
+                f"{self._config.base_url}/registry/agents",
+                json=payload,
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except httpx.HTTPStatusError as e:
+            raise OCPTransportError(
+                f"Registration failed: {e.response.status_code} {e.response.text}",
+                code="OCP-500",
+            )
+        except httpx.RequestError as e:
+            raise OCPTransportError(f"Registration request failed: {e}", code="OCP-502")
+
+    async def discover(
+        self,
+        domains: list[str] | None = None,
+        capabilities: list[str] | None = None,
+        min_trust_level: int = 0,
+        status: str = "active",
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        """Discover agents by domain, capability, and trust level.
+
+        Args:
+            domains: Filter by domain(s).
+            capabilities: Filter by capability ID(s).
+            min_trust_level: Minimum required trust level.
+            status: Agent status filter (default ``"active"``).
+            limit: Maximum results to return.
+            offset: Pagination offset.
+
+        Returns:
+            List of matching agent record dicts.
+        """
+        filters: dict[str, Any] = {"status": status}
+        if domains:
+            filters["domains"] = domains
+        if capabilities:
+            filters["capabilities"] = capabilities
+        if min_trust_level > 0:
+            filters["min_trust_level"] = min_trust_level
+
+        try:
+            resp = await self._client.post(
+                f"{self._config.base_url}/registry/discover",
+                json={"filters": filters, "limit": limit, "offset": offset},
+            )
+            resp.raise_for_status()
+            data = resp.json()
+            return data.get("results", [])
+        except httpx.HTTPStatusError as e:
+            raise OCPTransportError(
+                f"Discovery failed: {e.response.status_code}",
+                code="OCP-500",
+            )
+        except httpx.RequestError as e:
+            raise OCPTransportError(f"Discovery request failed: {e}", code="OCP-502")
+
+    async def resolve(self, agent_id: str) -> dict[str, Any]:
+        """Resolve an agent ID to its full record.
+
+        Args:
+            agent_id: The agent's DID.
+
+        Returns:
+            Full agent record dict.
+
+        Raises:
+            OCPAgentNotFoundError: If the agent doesn't exist.
+            OCPTransportError: On other failures.
+        """
+        try:
+            resp = await self._client.get(
+                f"{self._config.base_url}/registry/agents/{agent_id}",
+            )
+            if resp.status_code == 404:
+                raise OCPAgentNotFoundError(f"Agent not found: {agent_id}")
+            resp.raise_for_status()
+            return resp.json()
+        except OCPAgentNotFoundError:
+            raise
+        except httpx.HTTPStatusError as e:
+            raise OCPTransportError(
+                f"Resolution failed: {e.response.status_code}",
+                code="OCP-500",
+            )
+        except httpx.RequestError as e:
+            raise OCPTransportError(f"Resolution request failed: {e}", code="OCP-502")
+
+    async def deregister(self, agent_id: str, signature: str) -> dict[str, Any]:
+        """Remove an agent from the registry.
+
+        Args:
+            agent_id: The agent's DID.
+            signature: Auth signature.
+
+        Returns:
+            Registry response dict.
+        """
+        try:
+            resp = await self._client.delete(
+                f"{self._config.base_url}/registry/agents/{agent_id}",
+                headers={"Authorization": f"OCP-Ed25519 {signature}"},
+            )
+            resp.raise_for_status()
+            return resp.json() if resp.text else {}
+        except httpx.HTTPStatusError as e:
+            raise OCPTransportError(
+                f"Deregistration failed: {e.response.status_code}",
+                code="OCP-500",
+            )
+
+    async def close(self) -> None:
+        """Close the registry client."""
+        await self._client.aclose()
+
+
+═══ FILE: sdk/python/ocp/consensus.py ═══
+
+"""Consensus protocol — initiation, voting, and resolution.
+
+Implements OCP's multi-agent consensus mechanism (§6.2) with:
+
+- Weighted voting based on trust scores and confidence
+- Configurable quorum and threshold requirements
+- Byzantine fault tolerance (tolerates up to n/3 malicious agents)
+- Deadline enforcement and duplicate vote rejection
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from typing import Any
+
+from ocp.crypto import SigningKeyPair, b64url_encode, generate_uuid_short, sha3_256
+from ocp.exceptions import OCPConsensusError
+
+logger = logging.getLogger("ocp.consensus")
+
+
+@dataclass
+class ConsensusConfig:
+    """Configuration for a consensus round.
+
+    Attributes:
+        topic: Human-readable description of what's being decided.
+        options: Available vote options.
+        min_participants: Minimum number of votes for quorum.
+        threshold: Fraction of weighted score needed to win (0.0–1.0).
+        weighted: Whether to use trust-weighted scoring.
+        deadline: UTC deadline for vote submission.
+        min_trust_level: Minimum trust level to participate.
+        required_domains: Required domain expertise.
+    """
+
+    topic: str
+    options: list[str]
+    min_participants: int = 5
+    threshold: float = 0.67
+    weighted: bool = True
+    deadline: datetime | None = None
+    min_trust_level: int = 2
+    required_domains: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if len(self.options) < 2:
+            raise ValueError("Consensus requires at least 2 options")
+        if not 0.0 < self.threshold <= 1.0:
+            raise ValueError(f"Threshold must be in (0.0, 1.0], got {self.threshold}")
+        if self.min_participants < 1:
+            raise ValueError("min_participants must be >= 1")
+
+
+@dataclass
+class Vote:
+    """A single consensus vote.
+
+    Attributes:
+        voter_id: DID of the voting agent.
+        option: The selected option.
+        confidence: Voter's confidence in their choice (0.0–1.0).
+        trust_score: The voter's current trust score (0.0–1.0).
+        signature: Optional Ed25519 signature over the vote content.
+        timestamp: When the vote was cast.
+    """
+
+    voter_id: str
+    option: str
+    confidence: float
+    trust_score: float
+    signature: str = ""
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    def sign(self, signing_keys: SigningKeyPair, consensus_id: str) -> None:
+        """Sign this vote.
+
+        Args:
+            signing_keys: The voter's signing keys.
+            consensus_id: The consensus round identifier.
+        """
+        sign_data = f"{consensus_id}||{self.voter_id}||{self.option}||{self.confidence}".encode()
+        sig = signing_keys.sign(sha3_256(sign_data))
+        self.signature = b64url_encode(sig)
+
+
+@dataclass(frozen=True)
+class ConsensusResult:
+    """Result of a consensus round.
+
+    Attributes:
+        consensus_id: The round identifier.
+        winner: The winning option, or ``None`` if no consensus.
+        weighted_scores: Weighted score per option.
+        total_votes: Number of votes received.
+        reached_quorum: Whether quorum was met.
+        reached_threshold: Whether the threshold was met.
+    """
+
+    consensus_id: str
+    winner: str | None
+    weighted_scores: dict[str, float]
+    total_votes: int
+    reached_quorum: bool
+    reached_threshold: bool
+
+
+class ConsensusRound:
+    """Manages a single consensus round.
+
+    Handles vote collection, duplicate detection, deadline enforcement,
+    and result resolution.
+
+    Args:
+        config: The consensus configuration.
+
+    Usage::
+
+        round = ConsensusRound(config)
+        round.cast_vote(vote1)
+        round.cast_vote(vote2)
+        result = round.resolve()
+    """
+
+    def __init__(self, config: ConsensusConfig) -> None:
+        self.consensus_id = generate_uuid_short("con-")
+        self.config = config
+        self._votes: list[Vote] = []
+        self._voter_ids: set[str] = set()
+        self._created_at = datetime.now(timezone.utc)
+
+    @property
+    def vote_count(self) -> int:
+        """Number of votes received so far."""
+        return len(self._votes)
+
+    @property
+    def is_past_deadline(self) -> bool:
+        """Whether the deadline has passed."""
+        if self.config.deadline is None:
+            return False
+        return datetime.now(timezone.utc) > self.config.deadline
+
+    def initiation_payload(self) -> dict[str, Any]:
+        """Build the ``consensus_initiate`` message payload.
+
+        Returns:
+            Payload dict for a consensus initiation OCPUMF message.
+        """
+        return {
+            "consensus_id": self.consensus_id,
+            "topic": self.config.topic,
+            "options": self.config.options,
+            "quorum": {
+                "min_participants": self.config.min_participants,
+                "threshold": self.config.threshold,
+                "weighted": self.config.weighted,
+            },
+            "deadline": (
+                self.config.deadline.strftime("%Y-%m-%dT%H:%M:%SZ")
+                if self.config.deadline else None
+            ),
+            "eligible_agents": {
+                "min_trust_level": self.config.min_trust_level,
+                "required_domains": self.config.required_domains,
+            },
+        }
+
+    def cast_vote(self, vote: Vote) -> bool:
+        """Record a vote.
+
+        Validates the vote against the round configuration and rejects
+        duplicates, invalid options, and out-of-range confidence values.
+
+        Args:
+            vote: The vote to record.
+
+        Returns:
+            ``True`` if the vote was accepted, ``False`` if rejected.
+        """
+        # Reject duplicates
+        if vote.voter_id in self._voter_ids:
+            logger.warning("Duplicate vote from %s rejected", vote.voter_id)
+            return False
+
+        # Reject invalid option
+        if vote.option not in self.config.options:
+            logger.warning(
+                "Invalid option '%s' from %s rejected", vote.option, vote.voter_id
+            )
+            return False
+
+        # Reject out-of-range confidence
+        if not 0.0 <= vote.confidence <= 1.0:
+            logger.warning(
+                "Invalid confidence %.2f from %s rejected",
+                vote.confidence, vote.voter_id,
+            )
+            return False
+
+        # Reject after deadline
+        if self.is_past_deadline:
+            logger.warning("Vote from %s rejected: past deadline", vote.voter_id)
+            return False
+
+        self._voter_ids.add(vote.voter_id)
+        self._votes.append(vote)
+        return True
+
+    def resolve(self) -> ConsensusResult:
+        """Tally votes and determine the result.
+
+        Uses weighted scoring if configured:
+        ``weighted_score(option) = Σ(voter_trust_score × voter_confidence)``
+
+        Returns:
+            A :class:`ConsensusResult` with the outcome.
+        """
+        scores: dict[str, float] = {opt: 0.0 for opt in self.config.options}
+
+        for v in self._votes:
+            if self.config.weighted:
+                scores[v.option] += v.trust_score * v.confidence
+            else:
+                scores[v.option] += 1.0
+
+        total = sum(scores.values())
+        reached_quorum = len(self._votes) >= self.config.min_participants
+
+        winner = None
+        reached_threshold = False
+
+        if total > 0:
+            best_option = max(scores, key=lambda k: scores[k])
+            ratio = scores[best_option] / total
+            if ratio >= self.config.threshold:
+                winner = best_option
+                reached_threshold = True
+
+        # Winner only counts if both quorum and threshold are met
+        final_winner = winner if (reached_quorum and reached_threshold) else None
+
+        result = ConsensusResult(
+            consensus_id=self.consensus_id,
+            winner=final_winner,
+            weighted_scores={k: round(v, 4) for k, v in scores.items()},
+            total_votes=len(self._votes),
+            reached_quorum=reached_quorum,
+            reached_threshold=reached_threshold,
+        )
+
+        logger.info(
+            "Consensus %s resolved: winner=%s, quorum=%s, threshold=%s",
+            self.consensus_id, final_winner, reached_quorum, reached_threshold,
+        )
+
+        return result
+
+    def result_payload(self, result: ConsensusResult) -> dict[str, Any]:
+        """Build the ``consensus_result`` message payload.
+
+        Args:
+            result: The resolved consensus result.
+
+        Returns:
+            Payload dict for a ``consensus_result`` OCPUMF message.
+        """
+        return {
+            "consensus_id": result.consensus_id,
+            "winner": result.winner,
+            "weighted_scores": result.weighted_scores,
+            "total_votes": result.total_votes,
+            "reached_quorum": result.reached_quorum,
+            "reached_threshold": result.reached_threshold,
+        }
+
+
+═══ FILE: sdk/python/ocp/agent.py ═══
+
+"""High-level Agent class — the main entry point for the OCP SDK.
+
+The :class:`Agent` class is the primary interface for building OCP-enabled
+AI systems. It wraps identity management, transport, registry, trust,
+knowledge sharing, task delegation, and consensus into a single coherent API.
+
+Usage::
+
+    agent = Agent(
+        name="MyFinanceAI",
+        capabilities=["nlp:classification", "finance:risk_analysis"],
+        domains=["finance"],
+        service_endpoint="wss://my-ai.example.com/ocp/v1/ws",
+    )
+
+    await agent.register()
+    peers = await agent.discover(domain="finance")
+    await agent.share(insight, to=peers[0]["agent_id"])
+    await agent.close()
+"""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from dataclasses import dataclass, field
+from typing import Any
+
+from ocp.consensus import ConsensusConfig, ConsensusRound, ConsensusResult, Vote
+from ocp.crypto import b64url_encode, generate_uuid_short
+from ocp.exceptions import OCPTrustError, OCPValidationError
+from ocp.identity import AgentIdentity
+from ocp.knowledge import EmbeddingPackage, InsightPackage, ModelDelta
+from ocp.messages import MessageBuilder, MessageType, Priority
+from ocp.pvl import enforce_pvl
+from ocp.recovery import RecoveryManager, RecoveryShare
+from ocp.registry import AgentRecord, RegistryClient, RegistryConfig
+from ocp.transport import HTTPTransport, TransportConfig, WebSocketTransport
+from ocp.trust import Bond, BondPermissions, TrustLevel, Vouch
+
+logger = logging.getLogger("ocp.agent")
+
+
+@dataclass
+class Agent:
+    """An OCP agent — the primary interface for protocol participation.
+
+    Attributes:
+        name: Human-readable agent name.
+        capabilities: List of capability identifiers (e.g., ``"nlp:classification"``).
+        domains: List of domain identifiers (e.g., ``"finance"``).
+        network: Network identifier.
+        service_endpoint: This agent's OCP messaging endpoint URL.
+        registry_url: URL of the Agent Registry.
+    """
+
+    name: str
+    capabilities: list[str]
+    domains: list[str]
+    network: str = "mainnet"
+    service_endpoint: str = ""
+    registry_url: str = "https://registry.opencognitionprotocol.org/ocp/v1"
+
+    # Private state (initialized in __post_init__)
+    _identity: AgentIdentity | None = field(default=None, repr=False, init=False)
+    _registry: RegistryClient | None = field(default=None, repr=False, init=False)
+    _ws_transport: WebSocketTransport | None = field(default=None, repr=False, init=False)
+    _http_transport: HTTPTransport | None = field(default=None, repr=False, init=False)
+    _bonds: dict[str, Bond] = field(default_factory=dict, repr=False, init=False)
+    _vouches_received: list[Vouch] = field(default_factory=list, repr=False, init=False)
+    _vouches_given: list[Vouch] = field(default_factory=list, repr=False, init=False)
+    _active_consensus: dict[str, ConsensusRound] = field(default_factory=dict, repr=False, init=False)
+    _recovery_manager: RecoveryManager | None = field(default=None, repr=False, init=False)
+
+    def __post_init__(self) -> None:
+        self._identity = AgentIdentity.generate(network=self.network)
+        self._registry = RegistryClient(RegistryConfig(base_url=self.registry_url))
+        self._recovery_manager = RecoveryManager(self.agent_id, self._identity.signing_keys)
+        logger.info("Agent created: %s (%s)", self.name, self.agent_id)
+
+    # ---- Properties ----
+
+    @property
+    def agent_id(self) -> str:
+        """The agent's DID."""
+        assert self._identity is not None
+        return self._identity.agent_id
+
+    @property
+    def identity(self) -> AgentIdentity:
+        """The agent's full cryptographic identity."""
+        assert self._identity is not None
+        return self._identity
+
+    @property
+    def trust_level(self) -> TrustLevel:
+        """The agent's current trust level based on local state."""
+        from ocp.trust import determine_trust_level
+        return determine_trust_level(
+            is_verified=True,
+            vouch_count=len([v for v in self._vouches_received if v.is_valid]),
+            bond_count=len([b for b in self._bonds.values() if b.is_active]),
+        )
+
+    @property
+    def bonds(self) -> dict[str, Bond]:
+        """Active bonds keyed by peer agent ID."""
+        return {k: v for k, v in self._bonds.items() if v.is_active}
+
+    @property
+    def recovery_manager(self) -> RecoveryManager:
+        """Access the key recovery manager."""
+        assert self._recovery_manager is not None
+        return self._recovery_manager
+
+    # ---- Registration ----
+
+    async def register(self) -> dict[str, Any]:
+        """Register this agent on the OCP network.
+
+        Publishes the agent's identity, capabilities, domains, and
+        endpoints to the Agent Registry.
+
+        Returns:
+            Registry response dict.
+        """
+        assert self._identity is not None
+        assert self._registry is not None
+
+        caps = [
+            {"id": f"cap:{c}", "name": c, "version": "1.0"}
+            for c in self.capabilities
+        ]
+
+        endpoints: list[dict[str, Any]] = []
+        if self.service_endpoint:
+            t_type = "ocp-ws" if "ws" in self.service_endpoint else "ocp-http"
+            endpoints.append({
+                "transport": t_type,
+                "url": self.service_endpoint,
+                "priority": 1,
+            })
+
+        record = AgentRecord(
+            agent_id=self.agent_id,
+            display_name=self.name,
+            capabilities=caps,
+            domains=self.domains,
+            endpoints=endpoints,
+        )
+
+        sig_data = f"register:{self.agent_id}".encode()
+        sig = self._identity.signing_keys.sign(sig_data)
+        result = await self._registry.register(record, b64url_encode(sig))
+        logger.info("Registered on network: %s", self.agent_id)
+        return result
+
+    # ---- Discovery ----
+
+    async def discover(
+        self,
+        domain: str | None = None,
+        capability: str | None = None,
+        min_trust_level: int = 0,
+        limit: int = 20,
+    ) -> list[dict[str, Any]]:
+        """Discover peer agents by domain and/or capability.
+
+        Args:
+            domain: Filter by domain.
+            capability: Filter by capability.
+            min_trust_level: Minimum trust level.
+            limit: Maximum results.
+
+        Returns:
+            List of matching agent record dicts.
+        """
+        assert self._registry is not None
+        results = await self._registry.discover(
+            domains=[domain] if domain else None,
+            capabilities=[capability] if capability else None,
+            min_trust_level=min_trust_level,
+            limit=limit,
+        )
+        logger.info("Discovered %d peers", len(results))
+        return results
+
+    # ---- Messaging ----
+
+    def _builder(self) -> MessageBuilder:
+        """Create a MessageBuilder pre-configured with this agent's identity."""
+        assert self._identity is not None
+        return MessageBuilder(self.agent_id, self._identity.signing_keys)
+
+    async def send_message(
+        self,
+        to: str,
+        msg_type: MessageType,
+        payload: dict[str, Any],
+        priority: Priority = Priority.NORMAL,
+        require_ack: bool = False,
+    ) -> dict[str, Any]:
+        """Send a message to another agent.
+
+        Args:
+            to: Receiver's DID.
+            msg_type: The message type.
+            payload: Message payload.
+            priority: Message priority.
+            require_ack: Whether to request acknowledgement.
+
+        Returns:
+            Transport response dict.
+
+        Raises:
+            OCPValidationError: If no transport is configured.
+        """
+        builder = self._builder().to(to).type(msg_type).payload(payload).priority(priority)
+        if require_ack:
+            builder.require_ack()
+        msg = builder.build()
+
+        if self._http_transport:
+            return await self._http_transport.send(msg)
+        if self._ws_transport and self._ws_transport.is_connected:
+            await self._ws_transport.send(msg)
+            return {}
+
+        raise OCPValidationError(
+            "No transport configured. Call connect_ws() or connect_http() first.",
+            code="OCP-500",
+        )
+
+    async def broadcast(self, payload: dict[str, Any], tags: list[str] | None = None) -> dict[str, Any]:
+        """Broadcast a message to all agents matching the given tags.
+
+        Args:
+            payload: Message payload.
+            tags: Domain/topic tags for broadcast routing.
+
+        Returns:
+            Transport response dict.
+        """
+        builder = (
+            self._builder()
+            .to_broadcast()
+            .type(MessageType.BROADCAST)
+            .payload(payload)
+        )
+        if tags:
+            builder.tag(*tags)
+        msg = builder.build()
+
+        if self._http_transport:
+            return await self._http_transport.send(msg)
+        raise OCPValidationError("No transport configured", code="OCP-500")
+
+    # ---- Knowledge Sharing ----
+
+    async def share(
+        self,
+        knowledge: InsightPackage | EmbeddingPackage | ModelDelta,
+        to: str,
+    ) -> dict[str, Any]:
+        """Share knowledge with a peer agent.
+
+        Enforces the Privacy Validation Layer and checks bond permissions
+        before sending.
+
+        Args:
+            knowledge: The knowledge to share.
+            to: Receiver's DID.
+
+        Returns:
+            Transport response dict.
+
+        Raises:
+            OCPPrivacyViolation: If the payload fails PVL checks.
+            OCPTrustError: If the bond doesn't permit the knowledge type.
+        """
+        payload = knowledge.to_payload()
+        enforce_pvl(payload)
+
+        bond = self._bonds.get(to)
+        if bond and bond.is_active:
+            k_type = payload.get("knowledge_type", "")
+            if not bond.permits_knowledge_share(k_type):
+                raise OCPTrustError(
+                    f"Bond with {to} does not permit sharing '{k_type}'",
+                    code="OCP-403",
+                )
+
+        return await self.send_message(to, MessageType.KNOWLEDGE_SHARE, payload)
+
+    # ---- Bonding ----
+
+    async def request_bond(
+        self,
+        peer_id: str,
+        permissions: BondPermissions | None = None,
+        duration_days: int = 180,
+    ) -> dict[str, Any]:
+        """Send a bond request to a peer agent.
+
+        Args:
+            peer_id: The peer's DID.
+            permissions: Proposed permissions.
+            duration_days: Proposed bond duration.
+
+        Returns:
+            Transport response dict.
+        """
+        perms = permissions or BondPermissions()
+        payload = {
+            "proposed_permissions": perms.to_dict(),
+            "proposed_duration_days": duration_days,
+        }
+        return await self.send_message(
+            peer_id, MessageType.BOND_REQUEST, payload, require_ack=True
+        )
+
+    def accept_bond(self, peer_id: str, bond: Bond) -> None:
+        """Record an accepted bond locally.
+
+        Args:
+            peer_id: The bonded peer's DID.
+            bond: The accepted bond.
+        """
+        self._bonds[peer_id] = bond
+        logger.info("Bond accepted with %s: %s", peer_id, bond.bond_id)
+
+    def revoke_bond(self, peer_id: str) -> Bond | None:
+        """Revoke a bond with a peer.
+
+        Args:
+            peer_id: The peer's DID.
+
+        Returns:
+            The revoked bond, or ``None`` if no bond existed.
+        """
+        bond = self._bonds.get(peer_id)
+        if bond:
+            bond.revoke(self.agent_id)
+            logger.info("Bond revoked with %s: %s", peer_id, bond.bond_id)
+        return bond
+
+    # ---- Vouching ----
+
+    def vouch_for(self, subject_id: str, domains: list[str]) -> Vouch:
+        """Create a signed vouch for another agent.
+
+        Args:
+            subject_id: The DID of the agent to vouch for.
+            domains: Domains the vouch covers.
+
+        Returns:
+            A signed :class:`Vouch`.
+        """
+        assert self._identity is not None
+        vouch = Vouch(
+            attester_id=self.agent_id,
+            subject_id=subject_id,
+            domains=domains,
+            signing_keys=self._identity.signing_keys,
+        )
+        self._vouches_given.append(vouch)
+        logger.info("Vouched for %s in domains %s", subject_id, domains)
+        return vouch
+
+    def receive_vouch(self, vouch: Vouch) -> None:
+        """Record a received vouch.
+
+        Args:
+            vouch: The received vouch.
+        """
+        self._vouches_received.append(vouch)
+
+    # ---- Task Delegation ----
+
+    async def delegate_task(
+        self,
+        to: str,
+        task_type: str,
+        description: str,
+        input_data: dict[str, Any],
+        max_duration: int = 300,
+        required_capabilities: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Delegate a task to a bonded peer.
+
+        Args:
+            to: Receiver's DID.
+            task_type: Task category.
+            description: Human-readable task description.
+            input_data: Task input.
+            max_duration: Maximum duration in seconds.
+            required_capabilities: Capabilities the receiver must have.
+
+        Returns:
+            Transport response dict.
+
+        Raises:
+            OCPTrustError: If the bond doesn't permit task delegation.
+        """
+        bond = self._bonds.get(to)
+        if bond and not bond.permits_task_delegation():
+            raise OCPTrustError(
+                f"Bond with {to} does not permit task delegation",
+                code="OCP-403",
+            )
+
+        payload = {
+            "task_id": generate_uuid_short("task-"),
+            "task_type": task_type,
+            "description": description,
+            "input": {"format": "application/json", "data": input_data},
+            "constraints": {
+                "max_duration_seconds": max_duration,
+                "required_capabilities": required_capabilities or [],
+                "min_trust_level": 0,
+            },
+            "callback": {
+                "type": "ocp_message",
+                "agent_id": self.agent_id,
+            },
+        }
+        return await self.send_message(to, MessageType.TASK_REQUEST, payload)
+
+    # ---- Consensus ----
+
+    def initiate_consensus(self, config: ConsensusConfig) -> ConsensusRound:
+        """Create a new consensus round.
+
+        Args:
+            config: Consensus configuration.
+
+        Returns:
+            A new :class:`ConsensusRound`.
+        """
+        cr = ConsensusRound(config)
+        self._active_consensus[cr.consensus_id] = cr
+        logger.info("Consensus initiated: %s — %s", cr.consensus_id, config.topic)
+        return cr
+
+    # ---- Connection Management ----
+
+    async def connect_ws(self, url: str | None = None) -> None:
+        """Establish a WebSocket connection.
+
+        Args:
+            url: WebSocket URL. Uses ``service_endpoint`` if not provided.
+        """
+        assert self._identity is not None
+        target = url or self.service_endpoint
+        if not target:
+            raise OCPValidationError("No WebSocket URL provided", code="OCP-500")
+        config = TransportConfig(url=target, transport_type="ocp-ws")
+        self._ws_transport = WebSocketTransport(
+            config, self.agent_id, self._identity.signing_keys
+        )
+        await self._ws_transport.connect()
+
+    async def connect_http(self, url: str | None = None) -> None:
+        """Configure HTTP transport.
+
+        Args:
+            url: HTTPS endpoint URL. Uses ``service_endpoint`` if not provided.
+        """
+        assert self._identity is not None
+        target = url or self.service_endpoint
+        if not target:
+            raise OCPValidationError("No HTTP URL provided", code="OCP-500")
+        config = TransportConfig(url=target, transport_type="ocp-http")
+        self._http_transport = HTTPTransport(
+            config, self.agent_id, self._identity.signing_keys
+        )
+
+    async def close(self) -> None:
+        """Close all transports and the registry client."""
+        if self._ws_transport:
+            await self._ws_transport.close()
+        if self._http_transport:
+            await self._http_transport.close()
+        if self._registry:
+            await self._registry.close()
+        logger.info("Agent closed: %s", self.agent_id)
+
+
+═══ FILE: sdk/python/ocp/cli.py ═══
+
+"""Command-line utilities for OCP.
+
+Provides:
+- ``ocp-keygen``: Generate a new agent identity and print the DID and keys.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+
+from ocp.identity import AgentIdentity
+
+
+def keygen() -> None:
+    """Generate a new OCP agent identity and print details to stdout."""
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate an OCP agent identity")
+    parser.add_argument(
+        "--network", default="mainnet", choices=["mainnet", "testnet"],
+        help="Network identifier (default: mainnet)",
+    )
+    parser.add_argument(
+        "--endpoint", default="",
+        help="Service endpoint URL",
+    )
+    parser.add_argument(
+        "--json", action="store_true",
+        help="Output as JSON",
+    )
+    args = parser.parse_args()
+
+    identity = AgentIdentity.generate(network=args.network)
+
+    if args.json:
+        output = {
+            "agent_id": identity.agent_id,
+            "network": identity.network,
+            "public_key": identity.signing_keys.public_key_b64url,
+            "key_fingerprint": identity.key_fingerprint,
+            "encryption_public_key": identity.encryption_keys.public_key_b64url,
+        }
+        if args.endpoint:
+            output["did_document"] = identity.did_document(args.endpoint).to_dict()
+        print(json.dumps(output, indent=2))
+    else:
+        print(f"Agent ID:          {identity.agent_id}")
+        print(f"Network:           {identity.network}")
+        print(f"Public Key:        {identity.signing_keys.public_key_b64url}")
+        print(f"Key Fingerprint:   {identity.key_fingerprint}")
+        print(f"Encryption Key:    {identity.encryption_keys.public_key_b64url}")
+        if args.endpoint:
+            print(f"Endpoint:          {args.endpoint}")
+            print()
+            print("DID Document:")
+            doc = identity.did_document(args.endpoint)
+            print(json.dumps(doc.to_dict(), indent=2))
+
+
+if __name__ == "__main__":
+    keygen()
+
+
+═══ FILE: sdk/python/ocp/compliance.py ═══
+
+"""OCP Compliance Checker.
+
+Runs a subset of the OCP Compliance Test Suite to verify that a local
+SDK installation produces conforming outputs.
+"""
+
+from __future__ import annotations
+
+import sys
+import traceback
+
+
+def _test_identity() -> bool:
+    """Verify DID generation and format."""
+    from ocp.identity import AgentIdentity, validate_did
+    import re
+
+    ident = AgentIdentity.generate(network="testnet")
+    assert validate_did(ident.agent_id), f"Invalid DID: {ident.agent_id}"
+    assert ident.agent_id.startswith("did:ocp:testnet:agent-")
+
+    doc = ident.did_document("wss://test.example.com/ocp/v1/ws", ["cap:nlp:test"])
+    d = doc.to_dict()
+    assert "https://www.w3.org/ns/did/v1" in d["@context"]
+    assert d["verificationMethod"][0]["type"] == "Ed25519VerificationKey2020"
+
+    # Uniqueness
+    ids = {AgentIdentity.generate().agent_id for _ in range(50)}
+    assert len(ids) == 50, "Duplicate DIDs generated"
+    return True
+
+
+def _test_crypto() -> bool:
+    """Verify cryptographic operations."""
+    from ocp.crypto import (
+        SigningKeyPair, EncryptionKeyPair, aes_gcm_encrypt, aes_gcm_decrypt,
+        ecdh_derive_key, sha3_256, b64url_encode, b64url_decode,
+    )
+
+    # Ed25519
+    keys = SigningKeyPair.generate()
+    sig = keys.sign(b"test data")
+    keys.verify(sig, b"test data")
+
+    # X25519 ECDH
+    a = EncryptionKeyPair.generate()
+    b = EncryptionKeyPair.generate()
+    k1 = ecdh_derive_key(a.private_key, b.public_key_bytes)
+    k2 = ecdh_derive_key(b.private_key, a.public_key_bytes)
+    assert k1 == k2, "ECDH shared secrets don't match"
+
+    # AES-GCM
+    key = sha3_256(b"test-key")
+    nonce, ct = aes_gcm_encrypt(key, b"plaintext")
+    pt = aes_gcm_decrypt(key, nonce, ct)
+    assert pt == b"plaintext"
+
+    # Base64url roundtrip
+    data = b"\x00\xff\x80test"
+    assert b64url_decode(b64url_encode(data)) == data
+    return True
+
+
+def _test_messages() -> bool:
+    """Verify message building and validation."""
+    from ocp.identity import AgentIdentity
+    from ocp.messages import MessageBuilder, MessageType, MessageValidator
+
+    a = AgentIdentity.generate(network="testnet")
+    b = AgentIdentity.generate(network="testnet")
+
+    msg = (
+        MessageBuilder(a.agent_id, a.signing_keys)
+        .to(b.agent_id)
+        .type(MessageType.DISCOVERY_PING)
+        .payload({"test": True})
+        .build()
+    )
+
+    validator = MessageValidator()
+    validator.validate(msg, a.signing_keys.public_key_bytes)
+    return True
+
+
+def _test_pvl() -> bool:
+    """Verify Privacy Validation Layer."""
+    from ocp.pvl import validate_knowledge_payload
+
+    # PII detection
+    result = validate_knowledge_payload({
+        "knowledge_type": "insight",
+        "insight_id": "ins-test",
+        "topic": "test",
+        "confidence": 0.9,
+        "anonymized": True,
+        "payload": {"description": "Contact john@example.com"},
+        "provenance": {"source_agent": "did:ocp:testnet:agent-aabbccddeeff", "timestamp": "2026-01-01T00:00:00Z"},
+    })
+    assert not result.passed and result.rejection_code == "PVL-001"
+
+    # Clean payload passes
+    result = validate_knowledge_payload({
+        "knowledge_type": "insight",
+        "insight_id": "ins-test",
+        "topic": "test",
+        "confidence": 0.9,
+        "anonymized": True,
+        "payload": {"description": "A clean finding"},
+        "provenance": {"source_agent": "did:ocp:testnet:agent-aabbccddeeff", "timestamp": "2026-01-01T00:00:00Z"},
+    })
+    assert result.passed
+    return True
+
+
+def _test_recovery() -> bool:
+    """Verify Shamir's Secret Sharing."""
+    from ocp.recovery import split_secret, reconstruct_secret
+    import secrets as sec
+
+    secret = sec.token_bytes(32)
+    shares = split_secret(secret, threshold=3, num_shares=5)
+    recovered = reconstruct_secret(shares[:3])
+    assert recovered == secret, "SSS reconstruction failed"
+
+    import itertools
+    for combo in itertools.combinations(shares, 3):
+        assert reconstruct_secret(list(combo)) == secret
+    return True
+
+
+def _test_consensus() -> bool:
+    """Verify consensus protocol."""
+    from ocp.consensus import ConsensusConfig, ConsensusRound, Vote
+
+    r = ConsensusRound(ConsensusConfig(
+        topic="Test", options=["a", "b"], min_participants=2, threshold=0.6,
+    ))
+    assert r.cast_vote(Vote(voter_id="x", option="a", confidence=0.9, trust_score=0.8))
+    assert r.cast_vote(Vote(voter_id="y", option="a", confidence=0.8, trust_score=0.7))
+    assert not r.cast_vote(Vote(voter_id="x", option="b", confidence=0.5, trust_score=0.5))  # dup
+
+    result = r.resolve()
+    assert result.winner == "a"
+    assert result.reached_quorum
+    return True
+
+
+def main() -> None:
+    """Run the OCP compliance check suite."""
+    tests = [
+        ("Identity & DID", _test_identity),
+        ("Cryptographic Primitives", _test_crypto),
+        ("Message Building & Validation", _test_messages),
+        ("Privacy Validation Layer", _test_pvl),
+        ("Key Recovery (Shamir SSS)", _test_recovery),
+        ("Consensus Protocol", _test_consensus),
+    ]
+
+    print("OCP Compliance Check — SDK v1.0.0")
+    print("=" * 50)
+
+    passed = 0
+    failed = 0
+
+    for name, test_fn in tests:
+        try:
+            result = test_fn()
+            if result:
+                print(f"  ✓ {name}")
+                passed += 1
+            else:
+                print(f"  ✗ {name} — returned False")
+                failed += 1
+        except Exception as e:
+            print(f"  ✗ {name} — {e}")
+            traceback.print_exc()
+            failed += 1
+
+    print("=" * 50)
+    print(f"Results: {passed} passed, {failed} failed")
+
+    sys.exit(0 if failed == 0 else 1)
+
+
+if __name__ == "__main__":
+    main()

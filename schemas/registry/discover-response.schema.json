@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/registry/discover-response.schema.json",
+  "title": "OCP Registry Discovery Response",
+  "description": "Response body from the registry discover endpoint.",
+  "type": "object",
+  "required": ["total", "results"],
+  "properties": {
+    "total": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of matching agents."
+    },
+    "limit": {
+      "type": "integer",
+      "description": "Limit used in this query."
+    },
+    "offset": {
+      "type": "integer",
+      "description": "Offset used in this query."
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DiscoveryResult"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "DiscoveryResult": {
+      "type": "object",
+      "required": ["agent_id", "display_name", "domains", "capabilities", "trust_level", "endpoints"],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "pattern": "^did:ocp:"
+        },
+        "display_name": { "type": "string" },
+        "domains": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "trust_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "transport": { "type": "string" },
+              "url": { "type": "string", "format": "uri" },
+              "priority": { "type": "integer" }
+            }
+          }
+        },
+        "extensions": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

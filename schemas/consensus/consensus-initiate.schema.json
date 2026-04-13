@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/consensus/consensus-initiate.schema.json",
+  "title": "OCP Consensus Initiation Payload",
+  "description": "Payload for a consensus_initiate message. The initiating agent defines the question, options, quorum, and deadline.",
+  "type": "object",
+  "required": ["consensus_id", "topic", "options", "quorum"],
+  "properties": {
+    "consensus_id": {
+      "type": "string",
+      "pattern": "^con-",
+      "description": "Unique consensus round identifier."
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Human-readable description of what is being decided."
+    },
+    "options": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      },
+      "uniqueItems": true,
+      "description": "Available vote options. MUST contain at least 2 unique values."
+    },
+    "quorum": {
+      "$ref": "#/$defs/QuorumConfig"
+    },
+    "deadline": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "UTC deadline for vote submission. Votes after this are rejected."
+    },
+    "eligible_agents": {
+      "$ref": "#/$defs/EligibilityCriteria"
+    },
+    "context": {
+      "type": "object",
+      "description": "Optional background information for voters."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "QuorumConfig": {
+      "type": "object",
+      "required": ["min_participants", "threshold"],
+      "properties": {
+        "min_participants": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Minimum number of votes required for quorum."
+        },
+        "threshold": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 1.0,
+          "description": "Fraction of weighted score needed to win."
+        },
+        "weighted": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, votes are weighted by trust_score × confidence."
+        }
+      },
+      "additionalProperties": false
+    },
+    "EligibilityCriteria": {
+      "type": "object",
+      "properties": {
+        "min_trust_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4,
+          "description": "Minimum trust level to participate."
+        },
+        "required_domains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Domains voters must be registered in."
+        },
+        "required_capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Capabilities voters must declare."
+        },
+        "invited_agents": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^did:ocp:"
+          },
+          "description": "Specific agents invited to participate."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+

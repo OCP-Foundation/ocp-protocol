@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/tasks/task-response.schema.json",
+  "title": "OCP Task Response Payload",
+  "description": "Payload for a task_response message. The receiver reports task status and results.",
+  "type": "object",
+  "required": ["task_id", "status"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-",
+      "description": "Matches the task_id from the original task_request."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "in_progress", "completed", "failed", "rejected", "timeout"],
+      "description": "Current task status."
+    },
+    "result": {
+      "$ref": "#/$defs/TaskResult",
+      "description": "Present when status is 'completed'."
+    },
+    "error": {
+      "$ref": "#/$defs/TaskError",
+      "description": "Present when status is 'failed' or 'rejected'."
+    },
+    "progress": {
+      "$ref": "#/$defs/TaskProgress",
+      "description": "Present when status is 'in_progress'."
+    },
+    "execution_metadata": {
+      "$ref": "#/$defs/ExecutionMetadata",
+      "description": "Resource usage and timing information."
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "completed" } } },
+      "then": { "required": ["result"] }
+    },
+    {
+      "if": { "properties": { "status": { "enum": ["failed", "rejected"] } } },
+      "then": { "required": ["error"] }
+    }
+  ],
+  "$defs": {
+    "TaskResult": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "MIME type of the result data."
+        },
+        "data": {
+          "description": "The result data."
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Confidence in the result."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaskError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code."
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error description."
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error context."
+        },
+        "retryable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the requester should retry."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaskProgress": {
+      "type": "object",
+      "properties": {
+        "percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Completion percentage."
+        },
+        "stage": {
+          "type": "string",
+          "description": "Current processing stage."
+        },
+        "estimated_remaining_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Estimated time remaining."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExecutionMetadata": {
+      "type": "object",
+      "properties": {
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Wall-clock execution time in milliseconds."
+        },
+        "tokens_consumed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tokens consumed (for LLM-based tasks)."
+        },
+        "model_version": {
+          "type": "string",
+          "description": "Version of the model used."
+        },
+        "compute_units": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Compute units consumed."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

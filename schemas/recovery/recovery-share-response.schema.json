@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/recovery/recovery-share-response.schema.json",
+  "title": "OCP Recovery Share Response Payload",
+  "description": "Payload for a recovery_share_response message. A custodian returns their encrypted share to the recovering agent.",
+  "type": "object",
+  "required": ["agent_id", "share_index", "encrypted_share", "nonce"],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "pattern": "^did:ocp:",
+      "description": "The agent being recovered."
+    },
+    "share_index": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 255,
+      "description": "Index of the share being returned."
+    },
+    "encrypted_share": {
+      "type": "string",
+      "description": "Base64url AES-256-GCM encrypted share, keyed via ECDH to the requester's ephemeral key."
+    },
+    "nonce": {
+      "type": "string",
+      "description": "Base64url-encoded 96-bit GCM nonce."
+    },
+    "ephemeral_public_key": {
+      "type": "string",
+      "description": "Base64url custodian's ephemeral X25519 public key (if custodian also uses ephemeral)."
+    }
+  },
+  "additionalProperties": false
+}

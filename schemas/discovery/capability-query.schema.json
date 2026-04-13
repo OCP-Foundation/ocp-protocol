@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/discovery/capability-query.schema.json",
+  "title": "OCP Capability Query Payload",
+  "description": "Payload for a capability_query message. Ask another agent what it can do.",
+  "type": "object",
+  "properties": {
+    "requested_capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Specific capabilities to ask about. If empty, the receiver returns all capabilities."
+    },
+    "requested_domains": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Specific domains to ask about."
+    },
+    "include_extensions": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to include extension information in the response."
+    }
+  },
+  "additionalProperties": false
+}

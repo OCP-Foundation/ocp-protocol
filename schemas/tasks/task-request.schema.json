@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/tasks/task-request.schema.json",
+  "title": "OCP Task Request Payload",
+  "description": "Payload for a task_request message. The requester delegates a task to a bonded peer.",
+  "type": "object",
+  "required": ["task_id", "task_type", "description", "input", "constraints"],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-",
+      "description": "Unique task identifier."
+    },
+    "task_type": {
+      "type": "string",
+      "enum": ["analysis", "classification", "generation", "translation", "summarization", "custom"],
+      "description": "Task category."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "description": "Human-readable task description."
+    },
+    "input": {
+      "$ref": "#/$defs/TaskInput"
+    },
+    "constraints": {
+      "$ref": "#/$defs/TaskConstraints"
+    },
+    "callback": {
+      "$ref": "#/$defs/TaskCallback"
+    },
+    "context": {
+      "type": "object",
+      "description": "Optional additional context for the task."
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal",
+      "description": "Task priority."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "TaskInput": {
+      "type": "object",
+      "required": ["format"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "description": "MIME type of the input data."
+        },
+        "schema_ref": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the input JSON Schema."
+        },
+        "data": {
+          "description": "The input data. Structure depends on format."
+        },
+        "data_ref": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to fetch input data from (alternative to inline data)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaskConstraints": {
+      "type": "object",
+      "properties": {
+        "max_duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400,
+          "default": 300,
+          "description": "Maximum time allowed for task completion."
+        },
+        "required_capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Capability IDs the receiver must have."
+        },
+        "min_trust_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4,
+          "description": "Minimum trust level of the receiver."
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum output tokens (if applicable)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaskCallback": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ocp_message", "webhook"],
+          "description": "'ocp_message' sends result as an OCPUMF message; 'webhook' posts to a URL."
+        },
+        "agent_id": {
+          "type": "string",
+          "pattern": "^did:ocp:",
+          "description": "Agent to deliver result to (for ocp_message)."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Webhook URL (for webhook type)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

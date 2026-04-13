@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/recovery/recovery-request.schema.json",
+  "title": "OCP Recovery Request Payload",
+  "description": "Payload for a recovery_request message. Sent to custodians when an agent needs to recover its private key.",
+  "type": "object",
+  "required": ["agent_id", "key_fingerprint", "ephemeral_public_key", "proof"],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "pattern": "^did:ocp:",
+      "description": "The agent requesting recovery."
+    },
+    "key_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{16}$",
+      "description": "Fingerprint of the key being recovered."
+    },
+    "ephemeral_public_key": {
+      "type": "string",
+      "description": "Base64url X25519 public key for encrypting the share response."
+    },
+    "proof": {
+      "$ref": "#/$defs/IdentityProof",
+      "description": "Proof of identity for the recovery request."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "IdentityProof": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["secondary_key_signature", "out_of_band", "multi_factor"],
+          "description": "Proof mechanism."
+        },
+        "secondary_key_id": {
+          "type": "string",
+          "description": "Key ID reference (for secondary_key_signature type)."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Ed25519 signature (for secondary_key_signature type)."
+        },
+        "note": {
+          "type": "string",
+          "description": "Instructions for out-of-band verification."
+        },
+        "challenge_response": {
+          "type": "string",
+          "description": "Response to a multi-factor challenge."
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "secondary_key_signature" } } },
+          "then": { "required": ["secondary_key_id", "signature"] }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/knowledge/model-delta.schema.json",
+  "title": "OCP Model Delta (Knowledge Type 3)",
+  "description": "Compressed, privacy-safe updates to model behavior. All model deltas MUST include differential privacy parameters with epsilon ≤ 10.0.",
+  "type": "object",
+  "required": [
+    "knowledge_type",
+    "delta_id",
+    "format",
+    "architecture",
+    "differential_privacy",
+    "payload",
+    "provenance"
+  ],
+  "properties": {
+    "knowledge_type": {
+      "const": "model_delta"
+    },
+    "delta_id": {
+      "type": "string",
+      "pattern": "^md-",
+      "description": "Unique model delta identifier."
+    },
+    "format": {
+      "type": "string",
+      "enum": ["federated_avg", "federated_sgd", "lora_delta", "adapter"],
+      "description": "Delta encoding format."
+    },
+    "compression": {
+      "type": "string",
+      "enum": ["none", "gzip", "zstd"],
+      "default": "gzip",
+      "description": "Compression algorithm applied to the payload."
+    },
+    "architecture": {
+      "$ref": "#/$defs/Architecture"
+    },
+    "differential_privacy": {
+      "$ref": "#/$defs/DifferentialPrivacy"
+    },
+    "payload": {
+      "type": "string",
+      "description": "Base64url-encoded compressed model delta bytes."
+    },
+    "provenance": {
+      "$ref": "#/$defs/DeltaProvenance"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/Compatibility",
+      "description": "Optional compatibility metadata for receivers."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Architecture": {
+      "type": "object",
+      "required": ["family"],
+      "properties": {
+        "family": {
+          "type": "string",
+          "description": "Model architecture family (e.g., 'transformer', 'cnn', 'rnn')."
+        },
+        "parameter_count": {
+          "type": "string",
+          "description": "Human-readable parameter count (e.g., '7B', '13B')."
+        },
+        "target_layers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Layer identifiers this delta applies to."
+        },
+        "hidden_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Hidden dimension size."
+        },
+        "vocab_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Vocabulary size (for language models)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "DifferentialPrivacy": {
+      "type": "object",
+      "required": ["mechanism", "epsilon", "delta"],
+      "properties": {
+        "mechanism": {
+          "type": "string",
+          "enum": ["gaussian", "laplace"],
+          "description": "Noise mechanism used."
+        },
+        "epsilon": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10.0,
+          "description": "Privacy budget. MUST be ≤ 10.0. Lower values provide stronger privacy."
+        },
+        "delta": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1,
+          "description": "Failure probability parameter."
+        },
+        "noise_multiplier": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Noise scaling factor."
+        },
+        "clip_norm": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Gradient clipping norm."
+        },
+        "accounting_method": {
+          "type": "string",
+          "enum": ["rdp", "gdp", "moments"],
+          "description": "Privacy accounting method used."
+        }
+      },
+      "additionalProperties": false
+    },
+    "DeltaProvenance": {
+      "type": "object",
+      "required": ["source_agent", "training_samples", "timestamp"],
+      "properties": {
+        "source_agent": {
+          "type": "string",
+          "pattern": "^did:ocp:",
+          "description": "DID of the agent that produced this delta."
+        },
+        "training_samples": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of training samples used."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the delta was produced."
+        },
+        "training_rounds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of training rounds."
+        },
+        "data_distribution": {
+          "type": "string",
+          "description": "Description of the training data distribution."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Compatibility": {
+      "type": "object",
+      "properties": {
+        "min_base_model_version": {
+          "type": "string",
+          "description": "Minimum base model version this delta is compatible with."
+        },
+        "max_base_model_version": {
+          "type": "string",
+          "description": "Maximum base model version."
+        },
+        "required_libraries": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Libraries required to apply this delta."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/consensus/consensus-result.schema.json",
+  "title": "OCP Consensus Result Payload",
+  "description": "Payload for a consensus_result message. The initiating agent broadcasts this to all participants within 60 seconds of the deadline.",
+  "type": "object",
+  "required": [
+    "consensus_id",
+    "winner",
+    "weighted_scores",
+    "total_votes",
+    "reached_quorum",
+    "reached_threshold"
+  ],
+  "properties": {
+    "consensus_id": {
+      "type": "string",
+      "pattern": "^con-",
+      "description": "The consensus round identifier."
+    },
+    "winner": {
+      "type": ["string", "null"],
+      "description": "The winning option, or null if no consensus was reached."
+    },
+    "weighted_scores": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0.0
+      },
+      "description": "Weighted score per option."
+    },
+    "total_votes": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total number of valid votes received."
+    },
+    "reached_quorum": {
+      "type": "boolean",
+      "description": "Whether the minimum participant count was met."
+    },
+    "reached_threshold": {
+      "type": "boolean",
+      "description": "Whether the winning option met the required threshold."
+    },
+    "vote_summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "description": "Raw vote count per option (unweighted)."
+    }
+  },
+  "additionalProperties": false
+}
+

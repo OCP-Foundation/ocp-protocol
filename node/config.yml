@@ -1,0 +1,107 @@
+# ===========================================================================
+# OCP Reference Node Configuration — v1.0
+# ===========================================================================
+
+node:
+  network: mainnet
+  data_dir: /app/data
+  log_level: info
+  log_format: json            # json | text
+  schema_dir: /app/schemas
+
+# ---- Transport Layer (Layer 1) ----
+transport:
+  http:
+    host: 0.0.0.0
+    port: 8420
+    cors_origins: ["*"]
+    max_request_size: 16777216   # 16 MB (MAX_MESSAGE_SIZE)
+    tls:
+      enabled: false
+      cert_file: ""
+      key_file: ""
+  websocket:
+    host: 0.0.0.0
+    port: 8421
+    subprotocol: ocp.v1
+    auth_timeout_seconds: 5
+    max_connections: 1000
+    ping_interval_seconds: 30
+    max_message_size: 16777216
+
+# ---- Agent Registry ----
+registry:
+  host: 0.0.0.0
+  port: 8422
+  mode: federated              # federated | dht | centralized
+  sync_interval_seconds: 60
+  peers: []
+  record_default_ttl: 86400
+  max_agents: 100000
+  cleanup_interval_seconds: 300
+
+# ---- Trust & Identity (Layer 2) ----
+trust:
+  score_weights:
+    identity_verification: 0.20
+    vouch_count: 0.25
+    bond_count: 0.25
+    interaction_reputation: 0.20
+    uptime_ratio: 0.10
+  min_vouch_level: 2
+  vouches_required_for_level2: 3
+  max_vouch_duration_days: 365
+  max_bond_duration_days: 365
+  bond_auto_renewal: true
+
+# ---- Knowledge Exchange (Layer 3) ----
+knowledge:
+  max_payload_bytes: 10485760   # 10 MB
+  pvl:
+    enabled: true
+    pii_scanning: true
+    enforce_anonymization: true
+    max_epsilon: 10.0
+    require_provenance: true
+
+# ---- Collaboration (Layer 4) ----
+collaboration:
+  task:
+    default_timeout_seconds: 300
+    max_timeout_seconds: 86400
+    max_concurrent_per_bond: 5
+  consensus:
+    max_options: 20
+    default_quorum: 5
+    default_threshold: 0.67
+    max_round_duration_seconds: 604800  # 7 days
+
+# ---- Recovery Custodian ----
+custodian:
+  host: 0.0.0.0
+  port: 8423
+  max_shares_stored: 10000
+  share_expiry_check_interval_seconds: 3600
+  require_proof: true
+  allowed_proof_types:
+    - secondary_key_signature
+    - out_of_band
+
+# ---- Rate Limiting ----
+rate_limiting:
+  enabled: true
+  messages_per_minute: 1000
+  bond_requests_per_hour: 10
+  discovery_per_minute: 100
+  broadcast_per_minute: 5
+  knowledge_per_minute: 50
+  recovery_requests_per_hour: 5
+
+# ---- Cryptography ----
+crypto:
+  signing_algorithm: Ed25519
+  key_exchange: X25519
+  symmetric_encryption: AES-256-GCM
+  hash_algorithm: SHA3-256
+  key_rotation_days: 90
+  

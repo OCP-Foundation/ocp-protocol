@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/errors/error-response.schema.json",
+  "title": "OCP Error Response Payload",
+  "description": "Payload for an error message type. Returned when an agent cannot process a received message.",
+  "type": "object",
+  "required": ["error_code", "message", "reference_message_id"],
+  "properties": {
+    "error_code": {
+      "type": "string",
+      "pattern": "^OCP-[45]\\d{2}$",
+      "description": "OCP error code.",
+      "examples": ["OCP-400", "OCP-401", "OCP-403", "OCP-404", "OCP-408", "OCP-413", "OCP-429", "OCP-500", "OCP-502", "OCP-503"]
+    },
+    "message": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "Human-readable error description."
+    },
+    "reference_message_id": {
+      "type": "string",
+      "pattern": "^msg-",
+      "description": "The message_id of the message that caused the error."
+    },
+    "details": {
+      "type": "object",
+      "description": "Additional error context.",
+      "properties": {
+        "field": {
+          "type": "string",
+          "description": "The specific field that caused the error."
+        },
+        "expected": {
+          "description": "What was expected."
+        },
+        "received": {
+          "description": "What was received."
+        },
+        "pvl_code": {
+          "type": "string",
+          "pattern": "^PVL-\\d{3}$",
+          "description": "PVL rejection code (for privacy violations)."
+        },
+        "retry_after": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Seconds to wait before retrying (for OCP-429)."
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

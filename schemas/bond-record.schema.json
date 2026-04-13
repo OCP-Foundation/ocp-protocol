@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/bond-record.schema.json",
+  "title": "OCP Bond Record",
+  "description": "Bilateral trust agreement between two OCP agents. Both agents MUST sign the record for it to be valid.",
+  "type": "object",
+  "required": ["bond_id", "agents", "permissions", "established_at", "expires_at", "signatures"],
+  "properties": {
+    "bond_id": {
+      "type": "string",
+      "pattern": "^bond-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$",
+      "description": "Unique bond identifier."
+    },
+    "agents": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "pattern": "^did:ocp:"
+      },
+      "description": "DIDs of the two bonded agents. Order is not significant."
+    },
+    "permissions": {
+      "$ref": "#/$defs/BondPermissions",
+      "description": "The agreed-upon permission scope. Effective permissions are the intersection of both parties' proposals."
+    },
+    "established_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the bond was established."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the bond expires. MUST NOT exceed 365 days from established_at."
+    },
+    "renewal": {
+      "type": "string",
+      "enum": ["auto", "manual", "none"],
+      "default": "manual",
+      "description": "Renewal mode. 'auto' renews on expiry; 'manual' requires re-negotiation."
+    },
+    "revoked": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the bond has been revoked by either party."
+    },
+    "revoked_by": {
+      "type": ["string", "null"],
+      "pattern": "^did:ocp:",
+      "description": "DID of the revoking agent, if revoked."
+    },
+    "revoked_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "When the bond was revoked, if applicable."
+    },
+    "signatures": {
+      "type": "object",
+      "minProperties": 2,
+      "maxProperties": 2,
+      "patternProperties": {
+        "^did:ocp:": {
+          "type": "string",
+          "description": "Base64url Ed25519 signature by this agent."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Both agents' signatures over the bond record."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "BondPermissions": {
+      "type": "object",
+      "properties": {
+        "knowledge_share": {
+          "$ref": "#/$defs/KnowledgeSharePermission"
+        },
+        "task_delegate": {
+          "$ref": "#/$defs/TaskDelegatePermission"
+        },
+        "model_delta_share": {
+          "$ref": "#/$defs/ModelDeltaSharePermission"
+        }
+      },
+      "additionalProperties": false
+    },
+    "KnowledgeSharePermission": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether knowledge sharing is permitted."
+        },
+        "allowed_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["embedding", "insight", "model_delta"]
+          },
+          "description": "Which knowledge types may be shared."
+        },
+        "max_payload_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 10485760,
+          "description": "Maximum payload size in bytes."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TaskDelegatePermission": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether task delegation is permitted."
+        },
+        "max_concurrent": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 5,
+          "description": "Maximum concurrent delegated tasks."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 300,
+          "description": "Default task timeout in seconds."
+        },
+        "allowed_task_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["analysis", "classification", "generation", "translation", "summarization", "custom"]
+          },
+          "description": "Permitted task types. If omitted, all types are allowed."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ModelDeltaSharePermission": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether model delta sharing is permitted."
+        },
+        "max_epsilon": {
+          "type": "number",
+          "maximum": 10.0,
+          "description": "Maximum accepted differential privacy epsilon."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
+
