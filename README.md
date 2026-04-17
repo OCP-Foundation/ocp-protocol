@@ -143,6 +143,21 @@ docker compose up -d
 
 * **Technical Specification:** The full technical details can be found in the [OCP Technical Specification (PDF)](spec/protocol/ocp-technical-spec-v1.pdf).
 * **Test Cases:** Detailed test scenarios are documented in the [OCP Test Case Specification (PDF)](spec/protocol/ocp-test-case-spec-v1.pdf).
+ 
+## Testing
+
+The OCP Compliance Test Suite ensures full adherence to the protocol specification.
+
+* **Test Directory:** `tests/`
+* **Test Count:** 70 test cases across 9 categories.
+* **Requirements:** `pytest`, `pytest-cov`
+
+### Running the Suite
+
+To run the full suite with coverage reporting:
+
+```bash```
+pytest tests/ -v --cov=ocp --cov-fail-under=85
 
 ## Contributing
 
