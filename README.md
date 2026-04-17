@@ -141,7 +141,8 @@ docker compose up -d
 
 ## Specification
 
-The full technical specification is at [`spec/SPECIFICATION.md`](spec/SPECIFICATION.md).
+* **Technical Specification:** The full technical details can be found in the [OCP Technical Specification (PDF)](spec/protocol/ocp-technical-spec-v1.pdf).
+* **Test Cases:** Detailed test scenarios are documented in the [OCP Test Case Specification (PDF)](spec/protocol/ocp-test-case-spec-v1.pdf).
 
 ## Contributing
 
