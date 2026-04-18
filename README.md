@@ -88,13 +88,14 @@ ocp-protocol/
 │           └── transport.py     # Network server (WS/HTTP)
 ├── tests/                       # Compliance test suite
 │   ├── conftest.py
+│   ├── test_crypto.py
 │   ├── test_identity.py
 │   ├── test_messages.py
-│   ├── test_crypto.py
-│   ├── test_knowledge.py
-│   ├── test_trust.py
 │   ├── test_transport.py
 │   ├── test_pvl.py
+│   ├── test_recovery.py
+│   ├── test_knowledge.py
+│   ├── test_trust.py
 │   └── test_consensus.py
 ├── examples/                    # Example agents
 │   ├── simple_agent.py
@@ -141,7 +142,23 @@ docker compose up -d
 
 ## Specification
 
-The full technical specification is at [`spec/SPECIFICATION.md`](spec/SPECIFICATION.md).
+* **Technical Specification:** The full technical details can be found in the [OCP Technical Specification (PDF)](spec/protocol/ocp-technical-spec-v1.pdf).
+* **Test Cases:** Detailed test scenarios are documented in the [OCP Test Case Specification (PDF)](spec/protocol/ocp-test-case-spec-v1.pdf).
+ 
+## Testing
+
+The OCP Compliance Test Suite ensures full adherence to the protocol specification.
+
+* **Test Directory:** `tests/`
+* **Test Count:** 70 test cases across 9 categories.
+* **Requirements:** `pytest`, `pytest-cov`
+
+### Running the Suite
+
+To run the full suite with coverage reporting:
+
+```bash```
+pytest tests/ -v --cov=ocp --cov-fail-under=85
 
 ## Contributing
 
