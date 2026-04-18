@@ -168,6 +168,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 To report vulnerabilities, see [SECURITY.md](SECURITY.md).
 
+## Governance
+Our decision-making process is outlined in [GOVERNANCE.md](GOVERNANCE.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
