@@ -12,14 +12,14 @@ OCP is an open, decentralized, privacy-preserving communication protocol that en
 
 ```
 ocp-protocol/
-├── spec/                        # Protocol specification
+├── spec/                        # Protocol specification (PDFs)
 │   ├── CHANGELOG.md             # Spec version history & migration guides
 │   ├── protocol/                # Technical Spec Documents
 │   │   ├── ocp-technical-spec-v1.pdf
 │   │   └── ocp-whitepaper.pdf
 │   └── setup/                   # Implementation & Node guides
 │       └── ocp-setup-guide.pdf
-├── schemas/                     # JSON Schemas
+├── schemas/                     # JSON Schemas definitions
 │   ├── ocpumf.schema.json       # Universal Message Format
 │   ├── agent-record.schema.json # Agent Registry record
 │   ├── did-document.schema.json # OCP DID Document
@@ -52,7 +52,7 @@ ocp-protocol/
 │   └── transport/               # Secure handshake & auth layer
 │       ├── auth-handshake.json
 │       └── auth-result.json
-├── sdk/                         # Reference SDKs
+├── sdk/                         # Software Development Kit
 │   └── python/                  # Python SDK
 │       ├── pyproject.toml
 │       └── ocp/
@@ -73,9 +73,9 @@ ocp-protocol/
 │           ├── transport.py     # Transport layer (WS + HTTP)
 │           └── trust.py         # Trust & bonding
 ├── node/                        # Reference OCP Node Implementation
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── config.yml
+│   ├── Dockerfile               # Container build specification
+│   ├── docker-compose.yml       # Multi-container orchestration
+│   ├── config.yml               # Global protocol settings
 │   └── src/
 │       └── ocp_node/            # Core Node Service
 │           ├── __init__.py
@@ -86,27 +86,27 @@ ocp-protocol/
 │           ├── router.py        # Message routing logic
 │           ├── registry.py      # Local registry service
 │           └── transport.py     # Network server (WS/HTTP)
-├── tests/                       # Compliance test suite
-│   ├── conftest.py
-│   ├── test_crypto.py
-│   ├── test_identity.py
-│   ├── test_messages.py
-│   ├── test_transport.py
-│   ├── test_pvl.py
-│   ├── test_recovery.py
-│   ├── test_knowledge.py
-│   ├── test_trust.py
-│   └── test_consensus.py
+├── tests/                       # Compliance Test Suite
+│   ├── conftest.py              # Global test configuration and fixtures
+│   ├── test_crypto.py           # Cryptographic & signature verification
+│   ├── test_identity.py         # Validating Agent identities
+│   ├── test_messages.py         # Message format & parsing
+│   ├── test_transport.py        # Secure transport & network tests
+│   ├── test_pvl.py              # PVL engine & logic validation
+│   ├── test_recovery.py         # Protocol recovery & resilience
+│   ├── test_knowledge.py        # Knowledge query & state tests
+│   ├── test_trust.pyn           # Trust model & scoring tests
+│   └── test_consensus.py        # Multi-agent consensus & sync
 ├── examples/                    # Example agents
 │   ├── simple_agent.py
 │   ├── knowledge_sharing.py
 │   └── multi_agent_consensus.py
 ├── .gitignore                   # Master ignore file
 ├── LICENSE                      # MIT License
-├── CONTRIBUTING.md
-├── CODE_OF_CONDUCT.md
-├── SECURITY.md
-├── GOVERNANCE.md
+├── CONTRIBUTING.md              # How to contribute
+├── CODE_OF_CONDUCT.md           # Community standards
+├── SECURITY.md                  # Security and resilance standards
+├── GOVERNANCE.md                # Community-led decision model
 └── README.md                    # Project Overview
 
 ## Quick Start
