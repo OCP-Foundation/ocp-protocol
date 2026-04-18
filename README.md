@@ -88,13 +88,14 @@ ocp-protocol/
 │           └── transport.py     # Network server (WS/HTTP)
 ├── tests/                       # Compliance test suite
 │   ├── conftest.py
+│   ├── test_crypto.py
 │   ├── test_identity.py
 │   ├── test_messages.py
-│   ├── test_crypto.py
-│   ├── test_knowledge.py
-│   ├── test_trust.py
 │   ├── test_transport.py
 │   ├── test_pvl.py
+│   ├── test_recovery.py
+│   ├── test_knowledge.py
+│   ├── test_trust.py
 │   └── test_consensus.py
 ├── examples/                    # Example agents
 │   ├── simple_agent.py
