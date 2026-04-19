@@ -143,13 +143,14 @@ docker compose up -d
 
 This section outlines the theoretical, ethical, and technical foundations of the Open Cognition Protocol.
 
+
 ### Core Specifications
 These foundational documents are maintained on the [Official OCP Website](https://www.opencognitionprotocol.org/get-started/) to ensure you are always accessing the latest versions.
 
-* **White Paper (v1.0):** [Download ↗](https://www.opencognitionprotocol.org/get-started/) — The foundational vision and protocol architecture.
-* **Academic White Paper:** [View ↗](https://www.opencognitionprotocol.org/get-started/) — Formal theoretical framework and cognitive models.
-* **Ethics & Regulatory Documentation:** [Read ↗](https://www.opencognitionprotocol.org/get-started/) — Compliance standards and AI safety principles.
-* **Blockchain Innovation Extension:** [Explore ↗](https://www.opencognitionprotocol.org/get-started/) — Decentralized ledger and incentive layers.
+* **White Paper (v1.0):** [Download ↗](https://www.opencognitionprotocol.org/_files/ugd/1933f6_d3d41eedf76e411196ea72c7f9d2d8e1.pdf) — The foundational vision and protocol architecture.
+* **Academic White Paper:** [View ↗](https://www.opencognitionprotocol.org/_files/ugd/1933f6_75e47514b2624d0cba2576c80778e123.pdf) — Formal theoretical framework and cognitive models.
+* **Ethics & Regulatory Documentation:** [Read ↗](https://www.opencognitionprotocol.org/_files/ugd/1933f6_c59db361e97343c99fd707e1b819a040.pdf) — Compliance standards and AI safety principles.
+* **Blockchain Innovation Extension:** [Explore ↗](https://www.opencognitionprotocol.org/_files/ugd/1933f6_e7d010dc681043ed9b4bfda09b2b340c.pdf) — Decentralized ledger and incentive layers.
 
 ### Implementation Specs
 Technical documentation for developers implementing or auditing the OCP node.
