@@ -116,7 +116,7 @@ ocp-protocol/
 pip install ocp-protocol
 ```
 
-### Create and register an agent
+### 📡Create and register an agent
 
 ```python
 from ocp import Agent
