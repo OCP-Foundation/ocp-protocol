@@ -1,4 +1,4 @@
-# OpenCognition Protocol (OCP)
+# 🕸️OpenCognition Protocol (OCP)
 
 **A decentralized open standard for collective AI intelligence.**
 
@@ -8,7 +8,7 @@
 
 OCP is an open, decentralized, privacy-preserving communication protocol that enables AI systems to discover one another, exchange knowledge, delegate tasks, and form collaborative relationships across organizational and platform boundaries.
 
-## Repository Structure
+## 🗂️Repository Structure
 
 ```
 ocp-protocol/
@@ -132,7 +132,7 @@ peers = await agent.discover(domain="research", capability="nlp:classification")
 print(f"Found {len(peers)} peers")
 ```
 
-### Run a local OCP node
+### 🚀Run a local OCP node
 
 ```bash
 cd node/
