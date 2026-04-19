@@ -174,6 +174,8 @@ To run the full suite with coverage reporting:
 ```bash
 pytest tests/ -v --cov=ocp --cov-fail-under=85
 
+```
+
 ## 🤝Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
