@@ -16,7 +16,6 @@ ocp-protocol/
 │   ├── CHANGELOG.md             # Spec version history & migration guides
 │   ├── protocol/                # Technical Spec Documents
 │   │   ├── ocp-technical-spec-v1.pdf
-│   │   └── ocp-whitepaper.pdf
 │   └── setup/                   # Implementation & Node guides
 │       └── ocp-setup-guide.pdf
 ├── schemas/                     # JSON Schemas definitions
@@ -140,38 +139,52 @@ cd node/
 docker compose up -d
 ```
 
-## Specification
+## 📖 Specification
+
+This section outlines the theoretical, ethical, and technical foundations of the Open Cognition Protocol.
+
+### Core Specifications
+These foundational documents are maintained on the [Official OCP Website](https://www.opencognitionprotocol.org/get-started/) to ensure you are always accessing the latest versions.
+
+* **White Paper (v1.0):** [Download ↗](https://www.opencognitionprotocol.org/get-started/) — The foundational vision and protocol architecture.
+* **Academic White Paper:** [View ↗](https://www.opencognitionprotocol.org/get-started/) — Formal theoretical framework and cognitive models.
+* **Ethics & Regulatory Documentation:** [Read ↗](https://www.opencognitionprotocol.org/get-started/) — Compliance standards and AI safety principles.
+* **Blockchain Innovation Extension:** [Explore ↗](https://www.opencognitionprotocol.org/get-started/) — Decentralized ledger and incentive layers.
+
+### Implementation Specs
+Technical documentation for developers implementing or auditing the OCP node.
 
 * **Technical Specification:** The full technical details can be found in the [OCP Technical Specification (PDF)](spec/protocol/ocp-technical-spec-v1.pdf).
 * **Test Cases:** Detailed test scenarios are documented in the [OCP Test Case Specification (PDF)](spec/protocol/ocp-test-case-spec-v1.pdf).
- 
-## Testing
+
+---
+
+## 🧪 Testing
 
 The OCP Compliance Test Suite ensures full adherence to the protocol specification.
 
 * **Test Directory:** `tests/`
-* **Test Count:** 70 test cases across 9 categories.
+* **Test Count:** 70 test cases across 10 categories.
 * **Requirements:** `pytest`, `pytest-cov`
 
 ### Running the Suite
-
 To run the full suite with coverage reporting:
 
-```bash```
+```bash
 pytest tests/ -v --cov=ocp --cov-fail-under=85
 
-## Contributing
+## 🤝Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-## Security
+## 🔒Security
 
 To report vulnerabilities, see [SECURITY.md](SECURITY.md).
 
-## Governance
+## 🏛️ Governance
 Our decision-making process is outlined in [GOVERNANCE.md](GOVERNANCE.md).
 
-## License
+## 📜License
 
 MIT — see [LICENSE](LICENSE).
 
