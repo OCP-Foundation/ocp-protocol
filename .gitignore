@@ -45,6 +45,7 @@ Thumbs.db
 .env.local
 *.pem
 *.key
+identity.json
 
 # Test / Coverage
 .coverage
@@ -55,6 +56,3 @@ coverage/
 # Build artifacts
 *.whl
 *.tar.gz
-
-# OCP Specific
-sdk/python/ocp/schemas

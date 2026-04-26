@@ -12,13 +12,13 @@ OCP is an open, decentralized, privacy-preserving communication protocol that en
 
 ```
 ocp-protocol/
-├── spec/                        # Protocol specification (PDFs)
+├──📘spec/                       # Protocol specification (PDFs)
 │   ├── CHANGELOG.md             # Spec version history & migration guides
 │   ├── protocol/                # Technical Spec Documents
 │   │   ├── ocp-technical-spec-v1.pdf
 │   └── setup/                   # Implementation & Node guides
 │       └── ocp-setup-guide.pdf
-├── schemas/                     # JSON Schemas definitions
+├── 📐schemas/                   # JSON Schemas definitions
 │   ├── ocpumf.schema.json       # Universal Message Format
 │   ├── agent-record.schema.json # Agent Registry record
 │   ├── did-document.schema.json # OCP DID Document
@@ -51,14 +51,14 @@ ocp-protocol/
 │   └── transport/               # Secure handshake & auth layer
 │       ├── auth-handshake.json
 │       └── auth-result.json
-├── sdk/                         # Software Development Kit
+├── 📦sdk/                       # Software Development Kit
 │   └── python/                  # Python SDK
 │       ├── pyproject.toml
 │       └── ocp/
 │           ├── __init__.py
 │           ├── agent.py         # Agent class
 │           ├── cli.py         	 # Command-line utility
-│           ├── compliance.py    # Compliance checker
+│           ├── compliance.py    # Protocol conformance checker
 │           ├── consensus.py     # Consensus protocol
 │           ├── constants.py     # Protocol-level constants
 │           ├── crypto.py        # Cryptographic primitives
@@ -66,12 +66,12 @@ ocp-protocol/
 │           ├── identity.py      # DID generation & resolution
 │           ├── knowledge.py     # Knowledge types
 │           ├── messages.py      # OCPUMF builder & validator
-│           ├── pvl.py           # Privacy Validation Layer
+│           ├── pvl.py           # Privacy Validation Layer (PII Scrubbing)
 │           ├── recovery.py      # Key recovery
 │           ├── registry.py      # Agent registry client
 │           ├── transport.py     # Transport layer (WS + HTTP)
 │           └── trust.py         # Trust & bonding
-├── node/                        # Reference OCP Node Implementation
+├── 🏗️node/                      # Reference OCP Node Implementation
 │   ├── Dockerfile               # Container build specification
 │   ├── docker-compose.yml       # Multi-container orchestration
 │   ├── config.yml               # Global protocol settings
@@ -79,13 +79,13 @@ ocp-protocol/
 │       └── ocp_node/            # Core Node Service
 │           ├── __init__.py
 │           ├── __main__.py      # Execution entry point
-│           ├── custodian.py     # State & Key management
+│           ├── custodian.py     # Secret management & State persistence
 │           ├── database.py      # Persistence layer
 │           ├── handlers.py      # Request logic
 │           ├── router.py        # Message routing logic
 │           ├── registry.py      # Local registry service
 │           └── transport.py     # Network server (WS/HTTP)
-├── tests/                       # Compliance Test Suite
+├── ✅tests/                     # Compliance Test Suite
 │   ├── conftest.py              # Global test configuration and fixtures
 │   ├── test_crypto.py           # Cryptographic & signature verification
 │   ├── test_identity.py         # Validating Agent identities
@@ -94,12 +94,16 @@ ocp-protocol/
 │   ├── test_pvl.py              # PVL engine & logic validation
 │   ├── test_recovery.py         # Protocol recovery & resilience
 │   ├── test_knowledge.py        # Knowledge query & state tests
-│   ├── test_trust.pyn           # Trust model & scoring tests
+│   ├── test_trust.py            # Trust model & scoring tests
 │   └── test_consensus.py        # Multi-agent consensus & sync
 ├── examples/                    # Example agents
-│   ├── simple_agent.py
-│   ├── knowledge_sharing.py
-│   └── multi_agent_consensus.py
+│   ├── start_agent.py           # HelloWorldAgent 👋
+│   ├── research_demo.py         # Targeted discovery with error handling 🧪
+│   ├── client_test.py           # End-to-end test: Discovery, Delegation, and Vouching 🔄
+│   ├── simple_agent.py          # Identity generation and network discovery
+│   ├── key_recovery.py          # 3-of-5 Shamir recovery and key rotation
+│   ├── knowledge_sharing.py     # PII scrubbing (PVL) and secure data exchange
+│   └── multi_agent_consensus.py # Weighted voting and collective decision making
 ├── .gitignore                   # Master ignore file
 ├── LICENSE                      # MIT License
 ├── CONTRIBUTING.md              # How to contribute
@@ -107,37 +111,98 @@ ocp-protocol/
 ├── SECURITY.md                  # Security and resilance standards
 ├── GOVERNANCE.md                # Community-led decision model
 └── README.md                    # Project Overview
+```
+### 🚀 Quick Start
+Get your first OCP agent up and running in less than 5 minutes.
 
-## Quick Start
+Installation
+The OCP SDK requires Python 3.11+ and a specific stack for cryptography and high-performance networking. We recommend using a virtual environment.
 
-### Install the Python SDK
+📥Clone the Repository
+```bash
+# Using SSH
+git clone git@github.com:opencognitionprotocol/ocp-protocol.git
+
+# Using HTTPS
+git clone https://github.com/opencognitionprotocol/ocp-spec.git
+````
+⚙️Install the SDK
 
 ```bash
-pip install ocp-protocol
+# Install in editable mode with all dependencies
+cd ocp-protocol/sdk/python
+pip install -e .
 ```
+🔍Verify Installation
 
+Confirm the CLI tools are available in your path:
+```bash
+ocp-keygen --help
+```
+🔑Generate Identity
+Every OCP agent requires a unique cryptographic identity to interact with the network. This process generates an Ed25519 keypair (for signing messages) and an X25519 keypair (for encryption).
+
+```bash
+# Run the following command to initialize your identity:
+ocp-keygen --output identity.json
+```
+📦 What's inside identity.json?
+
+The generated file acts as your agent's "passport" and contains:
+
+* **Agent ID:** Your unique Decentralized Identifier (did:ocp:...).
+
+* **Signing Keys:** Proof of authorship for every message you send.
+
+* **Encryption Keys:** Used to establish secure, private channels with other agents.
+
+[!WARNING]
+**Keep your private keys private.** The identity.json file contains sensitive secrets. Never commit this file to version control. Our SDK is pre-configured with a .gitignore to help keep your identity safe.
+### Run a Local OCP Node
+OCP agents require a Registry to find peers and a Transport node to route messages. Start these in two separate terminal windows:
+* **Terminal 1** (Registry): python -m ocp_node.registry
+* **Terminal 2** (Transport): python -m ocp_node.transport
 ### 📡Create and register an agent
-
+Initialize your agent(e.g., my_agent.py) and announce its capabilities to the network.
 ```python
-from ocp import Agent
+import asyncio
+from ocp.agent import Agent
 
-agent = Agent(
-    name="MyResearchAI",
-    capabilities=["nlp:classification", "nlp:summarization"],
-    domains=["research"],
-)
+async def main():
+    # Initialize the Agent with specific capabilities
+    agent = Agent(
+        name="ResearchWorker",
+        capabilities=["nlp:summary"],
+        domains=["research"],
+        registry_url="http://127.0.0.1:8422/ocp/v1"
+    )
 
-await agent.register()
-peers = await agent.discover(domain="research", capability="nlp:classification")
-print(f"Found {len(peers)} peers")
+    # Register with the local Registry
+    await agent.register()
+    print(f"✅ Agent {agent.name} is LIVE!")
+    print(f"🆔 DID: {agent.agent_id}")
+
+    # Listen for tasks indefinitely
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except KeyboardInterrupt:
+        await agent.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
-### 🚀Run a local OCP node
+### 🛠️ Operational Commands
+Use these commands to verify the health and monitor the activity of your local OCP network once servers are live:
 
-```bash
-cd node/
-docker compose up -d
-```
+| Action | Command |
+| :--- | :--- |
+| **Check Registry Health** | `curl http://127.0.0.1:8422/health` |
+| **Check Transport Health** | `curl http://127.0.0.1:8420/health` |
+| **View Network Stats** | `curl http://127.0.0.1:8422/ocp/v1/registry/stats` |
+| **List Active Agents** | `curl -X POST http://127.0.0.1:8422/ocp/v1/registry/discover -d "{}"` |
+| **View Task Summary** | `curl http://127.0.0.1:8420/ocp/v1/tasks/summary` |
 
 ## 📖 Specification
 
@@ -172,8 +237,7 @@ The OCP Compliance Test Suite ensures full adherence to the protocol specificati
 To run the full suite with coverage reporting:
 
 ```bash
-pytest tests/ -v --cov=ocp --cov-fail-under=85
-
+pytest tests/ -v --cov=ocp --cov-fail-under=90
 ```
 
 ## 🤝Contributing

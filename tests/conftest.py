@@ -7,23 +7,14 @@ generation overhead. Test-specific fixtures use function scope.
 from __future__ import annotations
 
 import struct
-import secrets
-from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import pytest
 
 from ocp.crypto import SigningKeyPair, EncryptionKeyPair
 from ocp.identity import AgentIdentity
-from ocp.knowledge import (
-    EmbeddingPackage,
-    EmbeddingVector,
-    InsightFeature,
-    InsightPackage,
-    ModelDelta,
-)
-from ocp.trust import Bond, BondPermissions, Vouch
 from ocp.messages import MessageBuilder, MessageType
+from ocp.trust import Bond, BondPermissions, Vouch
 
 
 # ---- Identity fixtures ----

@@ -12,10 +12,11 @@ Usage:
 """
 
 import asyncio
-from ocp import Agent
+
+from ocp.agent import Agent
 from ocp.knowledge import InsightPackage, InsightFeature, EmbeddingPackage, EmbeddingVector
+from ocp.pvl import validate_knowledge_payload
 from ocp.trust import Bond, BondPermissions
-from ocp.pvl import validate_knowledge_payload, enforce_pvl
 
 
 async def main() -> None:

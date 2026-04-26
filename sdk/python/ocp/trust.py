@@ -11,7 +11,6 @@ This module implements OCP's graduated trust model:
 from __future__ import annotations
 
 import json
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum

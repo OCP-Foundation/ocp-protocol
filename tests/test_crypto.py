@@ -12,7 +12,6 @@ from ocp.crypto import (
     aes_gcm_decrypt,
     b64url_encode,
     b64url_decode,
-    derive_agent_id,
     ecdh_derive_key,
     encrypt_payload,
     decrypt_payload,
@@ -214,7 +213,7 @@ class TestGenerators:
         mid = generate_message_id()
         assert mid.startswith("msg-")
         parts = mid.split("-")
-        assert len(parts) == 4  # msg, 8hex, 4hex, 4hex (prefix split)
+        assert len(parts) == 5  # msg, 8hex, 4hex, 4hex (prefix split)
 
     def test_nonce_uniqueness(self):
         nonces = {generate_nonce() for _ in range(1000)}

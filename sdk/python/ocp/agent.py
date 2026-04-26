@@ -22,18 +22,17 @@ Usage::
 from __future__ import annotations
 
 import logging
-import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-from ocp.consensus import ConsensusConfig, ConsensusRound, ConsensusResult, Vote
+from ocp.consensus import ConsensusConfig, ConsensusRound
 from ocp.crypto import b64url_encode, generate_uuid_short
 from ocp.exceptions import OCPTrustError, OCPValidationError
 from ocp.identity import AgentIdentity
 from ocp.knowledge import EmbeddingPackage, InsightPackage, ModelDelta
 from ocp.messages import MessageBuilder, MessageType, Priority
 from ocp.pvl import enforce_pvl
-from ocp.recovery import RecoveryManager, RecoveryShare
+from ocp.recovery import RecoveryManager
 from ocp.registry import AgentRecord, RegistryClient, RegistryConfig
 from ocp.transport import HTTPTransport, TransportConfig, WebSocketTransport
 from ocp.trust import Bond, BondPermissions, TrustLevel, Vouch

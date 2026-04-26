@@ -26,7 +26,6 @@ from typing import Any
 from ocp.constants import MAX_EPSILON, MAX_PAYLOAD_SIZE
 from ocp.exceptions import OCPPrivacyViolation
 
-
 # ---- PII patterns (reference implementation) ----
 # Production should use a trained NER model for comprehensive detection.
 

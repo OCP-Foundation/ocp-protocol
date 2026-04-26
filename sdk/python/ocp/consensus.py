@@ -16,7 +16,6 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ocp.crypto import SigningKeyPair, b64url_encode, generate_uuid_short, sha3_256
-from ocp.exceptions import OCPConsensusError
 
 logger = logging.getLogger("ocp.consensus")
 
@@ -49,7 +48,7 @@ class ConsensusConfig:
         if len(self.options) < 2:
             raise ValueError("Consensus requires at least 2 options")
         if not 0.0 < self.threshold <= 1.0:
-            raise ValueError(f"Threshold must be in (0.0, 1.0], got {self.threshold}")
+            raise ValueError(f"threshold must be in (0.0, 1.0], got {self.threshold}")
         if self.min_participants < 1:
             raise ValueError("min_participants must be >= 1")
 
@@ -235,7 +234,8 @@ class ConsensusRound:
         if total > 0:
             best_option = max(scores, key=lambda k: scores[k])
             ratio = scores[best_option] / total
-            if ratio >= self.config.threshold:
+            # Using a tiny epsilon (1e-9) to handle rounding issues
+            if ratio >= (self.config.threshold - 1e-9):
                 winner = best_option
                 reached_threshold = True
 

@@ -22,8 +22,8 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 
 from ocp_node.database import Database
-from ocp_node.message_router import MessageRouter
 from ocp_node.handlers import register_all_handlers
+from ocp_node.message_router import MessageRouter
 
 log = structlog.get_logger()
 

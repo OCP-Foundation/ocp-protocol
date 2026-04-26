@@ -8,15 +8,15 @@ import secrets
 
 import pytest
 
+from ocp.crypto import EncryptionKeyPair, sha3_256_hex
+from ocp.exceptions import OCPRecoveryError
+from ocp.identity import AgentIdentity
 from ocp.recovery import (
     RecoveryManager,
     RecoveryShare,
     reconstruct_secret,
     split_secret,
 )
-from ocp.crypto import EncryptionKeyPair, SigningKeyPair, sha3_256_hex
-from ocp.identity import AgentIdentity
-from ocp.exceptions import OCPRecoveryError
 
 
 class TestShamirSplitReconstruct:

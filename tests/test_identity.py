@@ -5,10 +5,8 @@ Compliance category: Identity & DID (6 tests)
 
 import re
 
-import pytest
-
-from ocp.identity import AgentIdentity, DIDDocument, validate_did
 from ocp.crypto import derive_agent_id, SigningKeyPair
+from ocp.identity import AgentIdentity, DIDDocument, validate_did
 
 
 class TestDIDFormat:
@@ -63,7 +61,7 @@ class TestDIDDocument:
         )
         d = doc.to_dict()
         assert "https://www.w3.org/ns/did/v1" in d["@context"]
-        assert "https://ocp.foundation/ns/ocp/v1" in d["@context"]
+        assert "https://opencognitionprotocol.org/ns/ocp/v1" in d["@context"]
         assert d["id"] == identity.agent_id
         assert len(d["verificationMethod"]) >= 1
         assert d["verificationMethod"][0]["type"] == "Ed25519VerificationKey2020"

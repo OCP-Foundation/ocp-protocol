@@ -21,7 +21,6 @@ with the AES irreducible polynomial (x^8 + x^4 + x^3 + x + 1).
 from __future__ import annotations
 
 import secrets
-import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -44,7 +43,6 @@ from ocp.crypto import (
     sha3_256_hex,
 )
 from ocp.exceptions import OCPRecoveryError
-
 
 # ==========================================================================
 # GF(2^8) arithmetic
@@ -76,27 +74,33 @@ def _init_gf256_tables() -> None:
 
     _INITIALIZED = True
 
-
-def _gf_mul(a: int, b: int) -> int:
-    """Multiply two elements in GF(2^8)."""
-    if a == 0 or b == 0:
-        return 0
-    _init_gf256_tables()
-    return _EXP[_LOG[a] + _LOG[b]]
-
-
-def _gf_inv(a: int) -> int:
-    """Multiplicative inverse in GF(2^8)."""
-    if a == 0:
-        raise ZeroDivisionError("No inverse for 0 in GF(2^8)")
-    _init_gf256_tables()
-    return _EXP[255 - _LOG[a]]
-
-
-def _gf_add(a: int, b: int) -> int:
-    """Add (XOR) two elements in GF(2^8)."""
+def _gf_add(a, b):
+    """Addition in GF(2^8) is just XOR."""
     return a ^ b
 
+def _gf_mul(a, b):
+    """Multiplication in GF(2^8) using the Russian Peasant algorithm."""
+    p = 0
+    for _ in range(8):
+        if b & 1:
+            p ^= a
+        hi_bit_set = a & 0x80
+        a <<= 1
+        if hi_bit_set:
+            a ^= 0x1b  # AES primitive polynomial
+        b >>= 1
+    return p % 256
+
+def _gf_inv(n: int) -> int:
+    """Compute multiplicative inverse in GF(2^8) using Brute Force.
+    Since the field is only 256 elements, this is faster than Extended Euclidean.
+    """
+    if n == 0:
+        raise ZeroDivisionError()
+    for i in range(1, 256):
+        if _gf_mul(n, i) == 1:
+            return i
+    return 0 # Should never reach here
 
 # ==========================================================================
 # Polynomial evaluation
@@ -123,9 +127,9 @@ def _eval_polynomial(coeffs: list[int], x: int) -> int:
 # ==========================================================================
 
 def split_secret(
-    secret: bytes,
-    threshold: int = DEFAULT_RECOVERY_THRESHOLD,
-    num_shares: int = DEFAULT_RECOVERY_SHARES,
+        secret: bytes,
+        threshold: int = DEFAULT_RECOVERY_THRESHOLD,
+        num_shares: int = DEFAULT_RECOVERY_SHARES,
 ) -> list[tuple[int, bytes]]:
     """Split a secret into Shamir shares over GF(2^8).
 
@@ -144,8 +148,7 @@ def split_secret(
     Raises:
         ValueError: If parameters violate OCP constraints.
     """
-    _init_gf256_tables()
-
+    # Validation checks
     if threshold < 2:
         raise ValueError("Threshold must be >= 2 (threshold=1 is prohibited by OCP)")
     if num_shares < threshold:
@@ -158,70 +161,77 @@ def split_secret(
     shares: list[list[int]] = [[] for _ in range(num_shares)]
 
     for byte_val in secret:
+        # Construct the polynomial: f(0) = byte_val (constant term)
         coeffs = [byte_val] + [secrets.randbelow(256) for _ in range(threshold - 1)]
+
         for i in range(num_shares):
             x = i + 1  # x ∈ {1, 2, ..., n}, never 0
-            shares[i].append(_eval_polynomial(coeffs, x))
+
+            # Inline evaluation using Horner's Method with native GF math
+            # This replaces _eval_polynomial to ensure GF(2^8) compatibility
+            v = 0
+            for coeff in reversed(coeffs):
+                v = _gf_add(_gf_mul(v, x), coeff)
+            shares[i].append(v)
 
     return [(i + 1, bytes(shares[i])) for i in range(num_shares)]
 
-
 def reconstruct_secret(shares: list[tuple[int, bytes]]) -> bytes:
-    """Reconstruct a secret from Shamir shares via Lagrange interpolation.
-
-    Evaluates the Lagrange interpolating polynomial at x=0 for each
-    byte position independently over GF(2^8).
-
-    Args:
-        shares: List of ``(share_index, share_bytes)`` tuples.
-                Must contain at least ``threshold`` shares.
-
-    Returns:
-        The reconstructed secret bytes.
-
-    Raises:
-        ValueError: If shares are inconsistent or duplicated.
     """
-    _init_gf256_tables()
+    Reconstructs a secret using Lagrange interpolation over GF(2^8).
 
+    Performs byte-wise reconstruction, treating each byte
+    position across all shares as a distinct polynomial evaluation.
+    """
+    if not shares:
+        raise ValueError("No shares provided")
+
+    # Reject less than 2 shares (OCP Security Policy)
     if len(shares) < 2:
         raise ValueError("Need at least 2 shares to reconstruct")
 
-    num_bytes = len(shares[0][1])
-    for idx, s in shares:
-        if len(s) != num_bytes:
-            raise ValueError(
-                f"Share {idx} length ({len(s)}) does not match "
-                f"expected length ({num_bytes})"
-            )
-
-    xs = [s[0] for s in shares]
-    if len(set(xs)) != len(xs):
+    # Check for duplicate indices to avoid ZeroDivisionError in Lagrange
+    indices = [s[0] for s in shares]
+    if len(set(indices)) != len(indices):
         raise ValueError("Duplicate share indices detected")
 
-    result = bytearray(num_bytes)
+    # Ensure all share bytes are the same length
+    expected_len = len(shares[0][1])
+    if any(len(s[1]) != expected_len for s in shares):
+        raise ValueError("Share length mismatch")
 
-    for byte_pos in range(num_bytes):
-        ys = [s[1][byte_pos] for s in shares]
-        secret_byte = 0
+    num_bytes = expected_len
+    secret = bytearray()
 
-        for i, (xi, yi) in enumerate(zip(xs, ys)):
-            # Lagrange basis polynomial l_i evaluated at x=0
-            num = 1
-            den = 1
-            for j, xj in enumerate(xs):
-                if i != j:
-                    num = _gf_mul(num, xj)
-                    den = _gf_mul(den, _gf_add(xi, xj))
-            if den == 0:
-                raise ValueError(f"Degenerate share set at index {xi}")
-            basis = _gf_mul(num, _gf_inv(den))
-            secret_byte = _gf_add(secret_byte, _gf_mul(yi, basis))
+    for byte_idx in range(num_bytes):
+        points = [(s[0], s[1][byte_idx]) for s in shares]
+        byte_val = _lagrange_interpolate_zero(points)
+        secret.append(byte_val)
 
-        result[byte_pos] = secret_byte
+    return bytes(secret)
 
-    return bytes(result)
 
+def _lagrange_interpolate_zero(points: list[tuple[int, int]]) -> int:
+    """Standard Lagrange interpolation at x=0 in GF(2^8)."""
+    secret_byte = 0
+    for i in range(len(points)):
+        xi, yi = points[i]
+        num = 1
+        den = 1
+        for j in range(len(points)):
+            if i == j:
+                continue
+            xj, _ = points[j]
+            # In GF(2^8), subtraction is XOR, so (0 - xj) is just xj
+            num = _gf_mul(num, xj)
+            # (xi - xj)
+            den = _gf_mul(den, _gf_add(xi, xj))
+
+        # yi * (num / den)
+        term = _gf_mul(yi, _gf_mul(num, _gf_inv(den)))
+        secret_byte = _gf_add(secret_byte, term)
+
+    return secret_byte
 
 # ==========================================================================
 # Recovery Share record

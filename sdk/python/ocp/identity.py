@@ -15,7 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from ocp.constants import DID_METHOD, NETWORK_MAINNET
+from ocp.constants import NETWORK_MAINNET
 from ocp.crypto import (
     EncryptionKeyPair,
     SigningKeyPair,

@@ -7,6 +7,8 @@ import sys
 import structlog
 import yaml
 
+from ocp_node import __version__  # noqa: E402
+
 structlog.configure(
     processors=[
         structlog.processors.TimeStamper(fmt="iso"),
@@ -104,5 +106,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-from ocp_node import __version__  # noqa: E402

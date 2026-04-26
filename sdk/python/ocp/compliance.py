@@ -13,7 +13,6 @@ import traceback
 def _test_identity() -> bool:
     """Verify DID generation and format."""
     from ocp.identity import AgentIdentity, validate_did
-    import re
 
     ident = AgentIdentity.generate(network="testnet")
     assert validate_did(ident.agent_id), f"Invalid DID: {ident.agent_id}"

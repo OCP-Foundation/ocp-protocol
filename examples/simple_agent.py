@@ -11,7 +11,9 @@ Usage:
 """
 
 import asyncio
-from ocp import Agent, MessageType
+
+from ocp.agent import Agent
+from ocp.messages import MessageType
 
 
 async def main() -> None:

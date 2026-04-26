@@ -3,8 +3,8 @@
 Compliance category: Transport (4 tests)
 """
 
-from ocp.transport import TransportConfig, HTTPTransport, WebSocketTransport
 from ocp.identity import AgentIdentity
+from ocp.transport import TransportConfig, HTTPTransport, WebSocketTransport
 
 
 class TestTransportConfig:
@@ -30,14 +30,19 @@ class TestTransportConfig:
 class TestHTTPAuth:
     """OCP-SPEC §3.1.2 — HTTP authorization header."""
 
+    """OCP-SPEC §3.1.2 — HTTP authorization header."""
+
     def test_auth_header_format(self):
         ident = AgentIdentity.generate(network="testnet")
         cfg = TransportConfig(url="https://test.example.com/ocp/v1/messages", transport_type="ocp-http")
         transport = HTTPTransport(cfg, ident.agent_id, ident.signing_keys)
         header = transport._auth_header()
         assert header.startswith("OCP-Ed25519 did:ocp:testnet:")
-        parts = header.split(" ", 1)[1].split(":")
-        assert len(parts) == 3  # agent_id : timestamp : signature
+        credentials = header.split(" ", 1)[1]
+        parts = credentials.rsplit(":", 2)
+        assert len(parts) == 3  # [agent_id, timestamp, signature]
+        # Verify the timestamp is actually in the middle
+        assert "Z" in parts[1]  # ISO timestamp check
 
     def test_auth_header_changes_per_call(self):
         ident = AgentIdentity.generate(network="testnet")

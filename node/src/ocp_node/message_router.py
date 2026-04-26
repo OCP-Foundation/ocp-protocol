@@ -12,16 +12,14 @@ passes through:
 
 from __future__ import annotations
 
-import json
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Awaitable
 
 import structlog
 
-from ocp.messages import MessageValidator, MessageType, is_expired
-from ocp.pvl import validate_knowledge_payload, PVLResult
 from ocp.constants import OCP_VERSION
-
+from ocp.messages import MessageValidator, is_expired
+from ocp.pvl import validate_knowledge_payload
 from ocp_node.database import Database
 
 log = structlog.get_logger()

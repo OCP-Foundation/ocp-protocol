@@ -3,11 +3,12 @@
 Compliance category: Message Building & Validation (8 tests)
 """
 
-import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from ocp.crypto import SigningKeyPair
+from ocp.exceptions import OCPAuthError, OCPValidationError
 from ocp.messages import (
     MessageBuilder,
     MessageType,
@@ -17,7 +18,6 @@ from ocp.messages import (
     build_error,
     is_expired,
 )
-from ocp.exceptions import OCPAuthError, OCPValidationError
 
 
 class TestMessageBuilder:

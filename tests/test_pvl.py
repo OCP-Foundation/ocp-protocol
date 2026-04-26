@@ -3,12 +3,10 @@
 Compliance category: Privacy Validation Layer (10 tests)
 """
 
-import json
-
 import pytest
 
-from ocp.pvl import validate_knowledge_payload, enforce_pvl, PVLResult
 from ocp.exceptions import OCPPrivacyViolation
+from ocp.pvl import validate_knowledge_payload, enforce_pvl
 
 
 class TestPVL001_PII:
