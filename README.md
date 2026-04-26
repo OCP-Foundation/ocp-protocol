@@ -140,6 +140,7 @@ Confirm the CLI tools are available in your path:
 ocp-keygen --help
 ```
 🔑Generate Identity
+
 Every OCP agent requires a unique cryptographic identity to interact with the network. This process generates an Ed25519 keypair (for signing messages) and an X25519 keypair (for encryption).
 
 ```bash
