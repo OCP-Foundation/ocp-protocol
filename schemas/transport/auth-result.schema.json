@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/transport/auth-result.schema.json",
+  "title": "OCP WebSocket Auth Result",
+  "description": "Server response to an auth_handshake frame. MUST be sent within 5 seconds of receiving the handshake.",
+  "type": "object",
+  "required": ["frame_type", "status"],
+  "properties": {
+    "frame_type": {
+      "const": "auth_result"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["accepted", "rejected"],
+      "description": "Whether the handshake was accepted."
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Session identifier. Present when status is 'accepted'."
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Session time-to-live in seconds."
+    },
+    "reason": {
+      "type": "string",
+      "description": "Rejection reason. Present when status is 'rejected'."
+    },
+    "server_version": {
+      "type": "string",
+      "description": "OCP node software version."
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": { "status": { "const": "accepted" } }
+  },
+  "then": {
+    "required": ["session_id", "ttl"]
+  }
+}

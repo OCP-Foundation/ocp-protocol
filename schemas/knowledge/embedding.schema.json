@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/knowledge/embedding.schema.json",
+  "title": "OCP Semantic Embedding (Knowledge Type 1)",
+  "description": "Vector representations of concepts shared for semantic similarity search and retrieval augmentation.",
+  "type": "object",
+  "required": ["knowledge_type", "encoding", "dimensions", "vectors"],
+  "properties": {
+    "knowledge_type": {
+      "const": "embedding"
+    },
+    "encoding": {
+      "type": "string",
+      "enum": ["float32", "float16", "bfloat16"],
+      "description": "Float encoding format. Implementations MUST support float32; float16 and bfloat16 are OPTIONAL."
+    },
+    "dimensions": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Number of dimensions per vector. MUST match actual vector length."
+    },
+    "model_family": {
+      "type": "string",
+      "description": "Architecture family that generated the embeddings (e.g., 'transformer')."
+    },
+    "normalization": {
+      "type": "string",
+      "enum": ["l2", "none"],
+      "default": "l2",
+      "description": "Normalization scheme. Vectors MUST be L2-normalized unless 'none'."
+    },
+    "vectors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/EmbeddingVector"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "EmbeddingVector": {
+      "type": "object",
+      "required": ["id", "vector"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^emb-",
+          "description": "Unique vector identifier."
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Human-readable label."
+        },
+        "vector": {
+          "type": "string",
+          "description": "Base64url-encoded typed array matching the declared encoding."
+        },
+        "metadata": {
+          "$ref": "#/$defs/VectorMetadata"
+        }
+      },
+      "additionalProperties": false
+    },
+    "VectorMetadata": {
+      "type": "object",
+      "properties": {
+        "source_domain": {
+          "type": "string",
+          "description": "Domain this embedding relates to."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the embedding was generated."
+        },
+        "model_version": {
+          "type": "string",
+          "description": "Version of the model that generated this embedding."
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
+

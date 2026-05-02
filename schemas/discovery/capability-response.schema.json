@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/discovery/capability-response.schema.json",
+  "title": "OCP Capability Response Payload",
+  "description": "Payload for a capability_response message. Lists the agent's capabilities and domains.",
+  "type": "object",
+  "required": ["capabilities", "domains"],
+  "properties": {
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "version"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "version": { "type": "string" },
+          "input_formats": { "type": "array", "items": { "type": "string" } },
+          "output_formats": { "type": "array", "items": { "type": "string" } },
+          "max_input_tokens": { "type": "integer", "minimum": 1 },
+          "description": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "domains": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "config": { "type": "object" }
+        }
+      }
+    },
+    "trust_level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4
+    }
+  },
+  "additionalProperties": false
+}

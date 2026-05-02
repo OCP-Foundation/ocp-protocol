@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/agent-record.schema.json",
+  "title": "OCP Agent Record",
+  "description": "Agent registration record for the OCP Agent Registry. Agents MUST publish a conforming record to be discoverable on the network.",
+  "type": "object",
+  "required": [
+    "agent_id",
+    "did_document_url",
+    "display_name",
+    "version",
+    "capabilities",
+    "domains",
+    "endpoints",
+    "status",
+    "registered_at",
+    "ttl",
+    "signature"
+  ],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "pattern": "^did:ocp:[a-z]+:[a-z]+-[0-9a-f]{12}$",
+      "description": "The agent's OCP DID."
+    },
+    "did_document_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL where the agent's DID Document can be resolved."
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Human-readable agent name."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Agent software version (semver)."
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Capability"
+      },
+      "description": "At least one capability MUST be declared."
+    },
+    "domains": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "description": "Domain identifier from the OCP Domain Taxonomy."
+      },
+      "description": "At least one domain MUST be declared."
+    },
+    "endpoints": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Endpoint"
+      },
+      "description": "At least one reachable endpoint MUST be declared."
+    },
+    "trust_level": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "default": 0,
+      "description": "Agent's current trust level (0=Anonymous through 4=Certified)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "inactive", "suspended"],
+      "description": "Current registration status."
+    },
+    "extensions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Extension"
+      },
+      "default": [],
+      "description": "OCP extensions supported by this agent."
+    },
+    "registered_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the agent first registered."
+    },
+    "last_seen_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the agent last communicated on the network."
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 604800,
+      "description": "Record time-to-live in seconds. Agent MUST re-register before expiry."
+    },
+    "signature": {
+      "type": "string",
+      "description": "Base64url Ed25519 signature over canonical JSON of record (excluding signature)."
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Capability": {
+      "type": "object",
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^cap:[a-z_]+:[a-z_]+$",
+          "description": "Capability identifier. Format: cap:<domain>:<capability_name>."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "Human-readable capability name."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+$",
+          "description": "Capability version."
+        },
+        "input_formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "MIME type (e.g., 'text/plain', 'application/json')."
+          },
+          "description": "Accepted input MIME types."
+        },
+        "output_formats": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Produced output MIME types."
+        },
+        "max_input_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum input size in tokens (if applicable)."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Optional description of the capability."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Endpoint": {
+      "type": "object",
+      "required": ["transport", "url", "priority"],
+      "properties": {
+        "transport": {
+          "type": "string",
+          "enum": ["ocp-ws", "ocp-http", "ocp-nats", "ocp-grpc"],
+          "description": "Transport protocol identifier."
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Endpoint URL. MUST use TLS (wss:// or https://)."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Routing priority. Lower values indicate higher preference."
+        },
+        "region": {
+          "type": "string",
+          "description": "Optional geographic region hint (e.g., 'us-east-1')."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Extension": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^ocp-ext:[a-z]+:[a-z_-]+:v\\d+$",
+          "description": "Extension identifier. Format: ocp-ext:<domain>:<name>:v<version>."
+        },
+        "config": {
+          "type": "object",
+          "description": "Extension-specific configuration."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

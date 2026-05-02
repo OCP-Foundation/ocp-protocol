@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/transport/auth-handshake.schema.json",
+  "title": "OCP WebSocket Auth Handshake",
+  "description": "First frame sent by the client after WebSocket connection. MUST be sent within 5 seconds.",
+  "type": "object",
+  "required": ["frame_type", "agent_id", "timestamp", "nonce", "signature"],
+  "properties": {
+    "frame_type": {
+      "const": "auth_handshake"
+    },
+    "agent_id": {
+      "type": "string",
+      "pattern": "^did:ocp:",
+      "description": "The connecting agent's DID."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Current UTC timestamp."
+    },
+    "nonce": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Base64url-encoded random 256-bit nonce."
+    },
+    "signature": {
+      "type": "string",
+      "description": "Ed25519 signature over SHA-3-256(agent_id || timestamp || nonce)."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/recovery/recovery-share.schema.json",
+  "title": "OCP Recovery Share Record",
+  "description": "A Shamir's Secret Sharing share for agent key recovery. Each share is encrypted to its custodian before transmission.",
+  "type": "object",
+  "required": [
+    "share_id",
+    "agent_id",
+    "scheme",
+    "threshold",
+    "total_shares",
+    "share_index",
+    "share_data",
+    "key_fingerprint",
+    "created_at"
+  ],
+  "properties": {
+    "share_id": {
+      "type": "string",
+      "pattern": "^share-[a-f0-9]+-\\d+$",
+      "description": "Unique share identifier. Format: share-<agent_id_short>-<index>."
+    },
+    "agent_id": {
+      "type": "string",
+      "pattern": "^did:ocp:",
+      "description": "The agent this share belongs to."
+    },
+    "scheme": {
+      "const": "shamir-sss-gf256",
+      "description": "Secret sharing scheme identifier."
+    },
+    "threshold": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 255,
+      "description": "Minimum shares needed to reconstruct (t). MUST be >= 2."
+    },
+    "total_shares": {
+      "type": "integer",
+      "minimum": 3,
+      "maximum": 255,
+      "description": "Total shares generated (n). MUST be >= threshold."
+    },
+    "share_index": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 255,
+      "description": "1-based index of this share."
+    },
+    "share_data": {
+      "type": "string",
+      "description": "Base64url-encoded share bytes."
+    },
+    "key_fingerprint": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 16,
+      "pattern": "^[a-f0-9]{16}$",
+      "description": "First 16 hex chars of SHA-3-256(public_key). Used for reconstruction verification."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the share was generated."
+    },
+    "expires_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "When the share expires. SHOULD align with key rotation schedule (default 90 days)."
+    },
+    "encryption": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["AES-256-GCM"],
+          "description": "Encryption algorithm used to protect the share for the custodian."
+        },
+        "note": {
+          "type": "string",
+          "description": "Human-readable note about encryption."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

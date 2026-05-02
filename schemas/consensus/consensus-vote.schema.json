@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/consensus/consensus-vote.schema.json",
+  "title": "OCP Consensus Vote Payload",
+  "description": "Payload for a consensus_vote message. Each eligible agent submits one signed vote per round.",
+  "type": "object",
+  "required": ["consensus_id", "vote", "confidence", "signature"],
+  "properties": {
+    "consensus_id": {
+      "type": "string",
+      "pattern": "^con-",
+      "description": "The consensus round being voted on."
+    },
+    "vote": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The selected option. MUST be one of the options defined in the initiation."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Voter's confidence in their choice."
+    },
+    "rationale_hash": {
+      "type": "string",
+      "description": "SHA-3-256 hash of the voter's private rationale (for auditability without disclosure)."
+    },
+    "signature": {
+      "type": "string",
+      "description": "Ed25519 signature over SHA-3-256(consensus_id || voter_id || vote || confidence)."
+    }
+  },
+  "additionalProperties": false
+}

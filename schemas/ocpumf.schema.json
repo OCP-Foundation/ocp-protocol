@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/ocpumf.schema.json",
+  "title": "OCP Universal Message Format (OCPUMF)",
+  "description": "Canonical envelope for all OCP v1.0 protocol communication. Every message sent over OCP MUST conform to this schema.",
+  "type": "object",
+  "required": [
+    "ocp_version",
+    "message_id",
+    "timestamp",
+    "sender",
+    "receiver",
+    "message_type",
+    "payload"
+  ],
+  "properties": {
+    "ocp_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "const": "1.0",
+      "description": "Protocol version. MUST be '1.0' for this specification."
+    },
+    "message_id": {
+      "type": "string",
+      "pattern": "^msg-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$",
+      "description": "Unique message identifier. Truncated UUIDv4 with 'msg-' prefix."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp of message creation. MUST end with 'Z'."
+    },
+    "ttl": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 86400,
+      "default": 3600,
+      "description": "Time-to-live in seconds. Receivers MUST discard expired messages."
+    },
+    "sender": {
+      "$ref": "#/$defs/Sender"
+    },
+    "receiver": {
+      "$ref": "#/$defs/Receiver"
+    },
+    "message_type": {
+      "$ref": "#/$defs/MessageType"
+    },
+    "priority": {
+      "type": "string",
+      "enum": ["low", "normal", "high", "critical"],
+      "default": "normal",
+      "description": "Message priority. Nodes MAY use this for routing decisions."
+    },
+    "encryption": {
+      "$ref": "#/$defs/Encryption",
+      "description": "Present when the payload is encrypted. Omitted for plaintext messages."
+    },
+    "payload": {
+      "type": "object",
+      "description": "Message-type-specific content. Structure varies by message_type."
+    },
+    "metadata": {
+      "$ref": "#/$defs/Metadata"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "OCPAgentId": {
+      "type": "string",
+      "pattern": "^did:ocp:[a-z]+:[a-z]+-[0-9a-f]{12}$",
+      "description": "OCP Decentralized Identifier. Format: did:ocp:<network>:agent-<12 hex chars>."
+    },
+    "OCPAgentIdOrBroadcast": {
+      "type": "string",
+      "pattern": "^did:ocp:",
+      "description": "OCP DID or broadcast address (did:ocp:<network>:broadcast)."
+    },
+    "Base64urlString": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "description": "Base64url-encoded string without padding (RFC 4648 §5)."
+    },
+    "Sender": {
+      "type": "object",
+      "required": ["agent_id", "signature"],
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/OCPAgentId",
+          "description": "DID of the sending agent."
+        },
+        "signature": {
+          "$ref": "#/$defs/Base64urlString",
+          "description": "Ed25519 signature over SHA-3-256(canonical_json(message with empty signature))."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Receiver": {
+      "type": "object",
+      "required": ["agent_id"],
+      "properties": {
+        "agent_id": {
+          "$ref": "#/$defs/OCPAgentIdOrBroadcast",
+          "description": "DID of the receiving agent, or broadcast address."
+        },
+        "broadcast": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, message is delivered to all agents matching metadata.tags."
+        }
+      },
+      "additionalProperties": false
+    },
+    "MessageType": {
+      "type": "string",
+      "enum": [
+        "discovery_ping",
+        "capability_query",
+        "capability_response",
+        "knowledge_share",
+        "knowledge_ack",
+        "task_request",
+        "task_response",
+        "bond_request",
+        "bond_negotiate",
+        "bond_accept",
+        "bond_confirm",
+        "bond_revoke",
+        "consensus_initiate",
+        "consensus_vote",
+        "consensus_result",
+        "broadcast",
+        "recovery_request",
+        "recovery_share_response",
+        "share_revoke",
+        "ack",
+        "error"
+      ],
+      "description": "The type of OCP message. Determines the expected payload structure."
+    },
+    "Encryption": {
+      "type": "object",
+      "required": ["algorithm", "key_exchange", "nonce", "ephemeral_public_key"],
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "enum": ["AES-256-GCM"],
+          "description": "Symmetric encryption algorithm."
+        },
+        "key_exchange": {
+          "type": "string",
+          "enum": ["ECDH-X25519"],
+          "description": "Key exchange mechanism."
+        },
+        "nonce": {
+          "$ref": "#/$defs/Base64urlString",
+          "description": "Base64url-encoded 96-bit (12-byte) GCM nonce."
+        },
+        "ephemeral_public_key": {
+          "$ref": "#/$defs/Base64urlString",
+          "description": "Base64url-encoded ephemeral X25519 public key used for ECDH."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Metadata": {
+      "type": "object",
+      "properties": {
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "description": "Domain/topic tags for routing and filtering."
+        },
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(-[A-Z]{2})?$",
+          "default": "en",
+          "description": "ISO 639-1 language code of the payload content."
+        },
+        "requires_ack": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, receiver MUST send an ACK within 30 seconds."
+        },
+        "correlation_id": {
+          "type": "string",
+          "description": "Links this message to a prior message (e.g., the message being ACK'd)."
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed trace identifier for cross-agent request tracing."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

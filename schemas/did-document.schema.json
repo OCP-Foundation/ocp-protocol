@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/did-document.schema.json",
+  "title": "OCP DID Document",
+  "description": "W3C DID Document extended for OCP agents. Published at a resolvable URL and referenced by the Agent Registry.",
+  "type": "object",
+  "required": ["@context", "id", "verificationMethod", "authentication", "service"],
+  "properties": {
+    "@context": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "contains": { "const": "https://www.w3.org/ns/did/v1" },
+      "description": "JSON-LD contexts. MUST include the W3C DID v1 context."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^did:ocp:[a-z]+:[a-z]+-[0-9a-f]{12}$",
+      "description": "The agent's OCP DID. MUST match the agent_id in the registry."
+    },
+    "verificationMethod": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/VerificationMethod"
+      },
+      "description": "Cryptographic keys. First entry is the primary signing key."
+    },
+    "authentication": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "description": "Reference to a verificationMethod id."
+      },
+      "description": "Key references used for authentication."
+    },
+    "service": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/Service"
+      },
+      "description": "Service endpoints. MUST include at least one OCPMessaging endpoint."
+    },
+    "capabilityDeclaration": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^cap:"
+      },
+      "description": "Capability identifiers this agent supports."
+    },
+    "trustAttestations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/TrustAttestation"
+      },
+      "description": "Vouches received from other agents."
+    },
+    "revocation": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/KeyRevocation"
+      },
+      "description": "Revoked keys. Verifiers MUST reject signatures from revoked keys."
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "VerificationMethod": {
+      "type": "object",
+      "required": ["id", "type", "controller", "publicKeyMultibase"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Key identifier. Format: <agent_did>#key-<n> or <agent_did>#recovery-key-<n>."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["Ed25519VerificationKey2020"],
+          "description": "Key type. OCP v1.0 supports Ed25519 only."
+        },
+        "controller": {
+          "type": "string",
+          "pattern": "^did:ocp:",
+          "description": "DID that controls this key. Typically the agent's own DID."
+        },
+        "publicKeyMultibase": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Multibase-encoded public key (z-base58btc prefix)."
+        },
+        "purpose": {
+          "type": "string",
+          "enum": ["authentication", "recovery"],
+          "description": "Key purpose. 'recovery' keys are used only for key recovery requests."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Service": {
+      "type": "object",
+      "required": ["id", "type", "serviceEndpoint"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Service identifier."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["OCPMessaging"],
+          "description": "Service type. MUST be 'OCPMessaging' for OCP endpoints."
+        },
+        "serviceEndpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "Endpoint URL (wss:// or https://)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "TrustAttestation": {
+      "type": "object",
+      "required": ["attester", "level", "issued", "signature"],
+      "properties": {
+        "attester": {
+          "type": "string",
+          "pattern": "^did:ocp:",
+          "description": "DID of the attesting (vouching) agent."
+        },
+        "level": {
+          "type": "string",
+          "enum": ["vouch", "certify"],
+          "description": "Attestation level."
+        },
+        "domains": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Domains the attestation covers."
+        },
+        "issued": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the attestation was issued."
+        },
+        "expires": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the attestation expires. Max 365 days from issuance."
+        },
+        "signature": {
+          "type": "string",
+          "description": "Ed25519 signature by the attester over the attestation content."
+        }
+      },
+      "additionalProperties": false
+    },
+    "KeyRevocation": {
+      "type": "object",
+      "required": ["keyId", "revokedAt"],
+      "properties": {
+        "keyId": {
+          "type": "string",
+          "description": "The id of the revoked verificationMethod."
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the key was revoked."
+        },
+        "reason": {
+          "type": "string",
+          "enum": ["rotation", "compromise", "decommission"],
+          "description": "Reason for revocation."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencognitionprotocol.org/schemas/v1/knowledge/insight.schema.json",
+  "title": "OCP Insight Package (Knowledge Type 2)",
+  "description": "Structured findings — patterns, anomalies, or conclusions — expressed in a standardized schema with provenance. The 'anonymized' field MUST be true; sharing non-anonymized insights is a protocol violation.",
+  "type": "object",
+  "required": [
+    "knowledge_type",
+    "insight_id",
+    "topic",
+    "confidence",
+    "anonymized",
+    "payload",
+    "provenance"
+  ],
+  "properties": {
+    "knowledge_type": {
+      "const": "insight"
+    },
+    "insight_id": {
+      "type": "string",
+      "pattern": "^ins-",
+      "description": "Unique insight identifier."
+    },
+    "topic": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "description": "Subject of the insight."
+    },
+    "category": {
+      "type": "string",
+      "maxLength": 256,
+      "description": "Classification category (e.g., 'anomaly_detection', 'trend_analysis')."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score. MUST be in [0.0, 1.0]."
+    },
+    "evidence_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of evidence samples supporting this insight."
+    },
+    "anonymized": {
+      "const": true,
+      "description": "MUST be true. OCP prohibits sharing non-anonymized knowledge."
+    },
+    "payload": {
+      "$ref": "#/$defs/InsightPayload"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "InsightPayload": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "pattern_id": {
+          "type": "string",
+          "description": "Identifier for the detected pattern."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "description": "Human-readable description of the finding."
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Feature"
+          },
+          "description": "Feature descriptions that characterize the pattern."
+        },
+        "recommended_action": {
+          "type": "string",
+          "maxLength": 1024,
+          "description": "Suggested action for agents receiving this insight."
+        },
+        "false_positive_rate": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Estimated false positive rate."
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Severity classification of the finding."
+        }
+      },
+      "additionalProperties": true
+    },
+    "Feature": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Feature identifier."
+        },
+        "type": {
+          "type": "string",
+          "enum": ["float", "int", "bool", "string", "categorical"],
+          "description": "Feature data type."
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Threshold value for triggering."
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["above", "below", "equal"],
+          "description": "Direction relative to threshold."
+        },
+        "importance": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Feature importance score."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "type": "object",
+      "required": ["source_agent", "derived_from", "timestamp"],
+      "properties": {
+        "source_agent": {
+          "type": "string",
+          "pattern": "^did:ocp:",
+          "description": "DID of the agent that produced this insight."
+        },
+        "derived_from": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Description of the source data. MUST be anonymized."
+        },
+        "methodology": {
+          "type": "string",
+          "description": "Method used to derive the insight."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the insight was generated."
+        },
+        "reproducibility_hash": {
+          "type": "string",
+          "description": "SHA-3 hash of methodology + parameters for reproducibility."
+        },
+        "parent_insights": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "IDs of insights this was derived from (for provenance chains)."
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
