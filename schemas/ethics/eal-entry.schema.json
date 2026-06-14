@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OCP Ethics Audit Log Entry",
+  "description": "Ref: Ethics Bible \u00a736, Appendix E",
+  "type": "object",
+  "required": [
+    "eal_id",
+    "prev_hash",
+    "timestamp",
+    "message_id",
+    "evl_result",
+    "node_id",
+    "signature"
+  ],
+  "properties": {
+    "eal_id": {
+      "type": "string",
+      "pattern": "^eal-"
+    },
+    "prev_hash": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "message_id": {
+      "type": "string"
+    },
+    "message_type": {
+      "type": "string"
+    },
+    "sender": {
+      "type": "string"
+    },
+    "receiver": {
+      "type": "string"
+    },
+    "evl_checks_performed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evl_result": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "REJECT"
+      ]
+    },
+    "evl_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evl_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "remediation_hint": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "node_id": {
+      "type": "string"
+    },
+    "cascade_event": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "sanctions_check": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "power_dynamics_flag": {
+      "type": "boolean"
+    },
+    "notification_required": {
+      "type": "boolean"
+    },
+    "generation_count_observed": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "signature": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OCP Prohibited Use Registry Entry",
+  "description": "Ref: Ethics Bible \u00a75, Appendix C",
+  "type": "object",
+  "required": [
+    "pur_id",
+    "version",
+    "category",
+    "evl_code",
+    "pattern",
+    "severity",
+    "issued_by",
+    "signature"
+  ],
+  "properties": {
+    "pur_id": {
+      "type": "string",
+      "pattern": "^pur-"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "category": {
+      "type": "string"
+    },
+    "evl_code": {
+      "type": "string",
+      "pattern": "^EVL-"
+    },
+    "description": {
+      "type": "string"
+    },
+    "pattern": {
+      "type": "object"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "block",
+        "warn"
+      ]
+    },
+    "remediation": {
+      "type": "string"
+    },
+    "issued_by": {
+      "type": "string"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "signature": {
+      "type": "string"
+    }
+  }
+}

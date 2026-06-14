@@ -17,7 +17,11 @@ ocp-protocol/
 │   ├── protocol/                # Technical Spec Documents
 │   │   ├── ocp-technical-spec-v1.pdf
 │   └── setup/                   # Implementation & Node guides
-│       └── ocp-setup-guide.pdf
+│   │   └── ocp-setup-guide.pdf
+│   └── ethics/                  # Integration Manuals
+│   │   ├── ocp-ethics-framework-complete-guide-v2.1.pdf
+│   │   ├── ocp-ethics-integration-specification-v2.1.pdf
+│   └── └── ocp-ethics-setup-and-installation-guide.pdf
 ├── 📐schemas/                   # JSON Schemas definitions
 │   ├── ocpumf.schema.json       # Universal Message Format
 │   ├── agent-record.schema.json # Agent Registry record
@@ -34,6 +38,12 @@ ocp-protocol/
 │   │   └── discovery-ping.json
 │   ├── errors/                  # Standardized error reporting
 │   │   └── error-response.json
+│   ├── ethics/                  # Ethics Schema Validation Engine
+│   │   ├── consent-token.schema.json            
+│   │   ├── eal-entry.schema.json 
+│   │   ├── ethics-metadata.schema   
+│   │   ├── pur-entry.schema.json                        
+│   │   └── transparency-card.schema.json                    
 │   ├── knowledge/               # Data, Embeddings, and Model updates
 │   │   ├── embedding.json
 │   │   ├── insight.json
@@ -71,6 +81,38 @@ ocp-protocol/
 │           ├── registry.py      # Agent registry client
 │           ├── transport.py     # Transport layer (WS + HTTP)
 │           └── trust.py         # Trust & bonding
+│           └── ⚖️ ethics/       # Ethics Enforcement Engine Submodule
+│               ├── __init__.py
+│               ├── agent_record_ext.py
+│               ├── bias.py
+│               ├── bond_ethics.py
+│               ├── cascade.py
+│               ├── cognitive.py
+│               ├── compliance_checker.py
+│               ├── compute_footprint.py
+│               ├── consensus_integrity.py
+│               ├── consent.py
+│               ├── constants.py
+│               ├── data_sovereignty.py
+│               ├── decommission.py
+│               ├── did_ext.py
+│               ├── dual_use.py
+│               ├── eal.py
+│               ├── emergent_behavior.py
+│               ├── evl.py
+│               ├── exceptions.py
+│               ├── knowledge_expiry.py
+│               ├── message_ethics.py
+│               ├── model_collapse.py
+│               ├── notifications.py
+│               ├── power_dynamics.py
+│               ├── pur.py
+│               ├── risk_classification.py
+│               ├── sanctions.py
+│               ├── synthetic.py
+│               ├── training_provenance.py
+│               ├── transparency.py
+│               └── trust_anti_gaming.py
 ├── 🏗️node/                      # Reference OCP Node Implementation
 │   ├── Dockerfile               # Container build specification
 │   ├── docker-compose.yml       # Multi-container orchestration
@@ -95,7 +137,10 @@ ocp-protocol/
 │   ├── test_recovery.py         # Protocol recovery & resilience
 │   ├── test_knowledge.py        # Knowledge query & state tests
 │   ├── test_trust.py            # Trust model & scoring tests
-│   └── test_consensus.py        # Multi-agent consensus & sync
+│   ├── test_consensus.py        # Multi-agent consensus & sync
+│   ├── test_evl.py              # Async EVL pipeline tests
+│   ├── test_subsystems.py       # Async Subsystem validations
+│   └── test_v20_modules.py      # Core modular compliance checkpoints
 ├── examples/                    # Example agents
 │   ├── start_agent.py           # HelloWorldAgent 👋
 │   ├── research_demo.py         # Targeted discovery with error handling 🧪

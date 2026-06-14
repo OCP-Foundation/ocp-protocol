@@ -66,6 +66,12 @@ __all__ = [
     "ConsensusRound",
     "ConsensusResult",
     "Vote",
+    # Ethics Framework Submodule Namespace
+    "ethics",
+    # Primary Ethics Exports (Brought to root level for ease of use)
+    "EVL",
+    "EthicalComplianceChecker",
+    "PUR",
     # Exceptions
     "OCPError",
     "OCPAuthError",
@@ -112,3 +118,9 @@ from ocp.trust import (
     Vouch,
     compute_trust_score,
 )
+
+# --- ⚖️ Integrated Ethics Framework Sub-Package ---
+from ocp import ethics
+from ocp.ethics.evl import EVL
+from ocp.ethics.compliance_checker import EthicalComplianceChecker
+from ocp.ethics.pur import PUR

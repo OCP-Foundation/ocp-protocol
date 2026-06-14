@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OCP Agent Transparency Card",
+  "description": "Ref: Ethics Bible \u00a714 TR-002",
+  "type": "object",
+  "required": [
+    "agent_id",
+    "model_family",
+    "training_data_summary",
+    "known_limitations",
+    "intended_use_cases"
+  ],
+  "properties": {
+    "agent_id": {
+      "type": "string",
+      "pattern": "^did:ocp:"
+    },
+    "model_family": {
+      "type": "string"
+    },
+    "model_version": {
+      "type": "string"
+    },
+    "training_data_summary": {
+      "type": "object",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "temporal_range": {
+          "type": "string"
+        },
+        "geographic_coverage": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "known_gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "consent_basis": {
+          "type": "string"
+        }
+      }
+    },
+    "known_limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bias_test_results": {
+      "type": "object"
+    },
+    "intended_use_cases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "out_of_scope_uses": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "compute_footprint_estimate": {
+      "type": "object"
+    },
+    "ocp_source_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

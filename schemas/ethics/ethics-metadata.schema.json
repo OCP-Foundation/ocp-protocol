@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OCP Ethics Metadata",
+  "description": "metadata.ethics object for OCPUMF messages. Ref: Integration Spec INT-001",
+  "type": "object",
+  "properties": {
+    "risk_tier": {
+      "type": "string",
+      "enum": [
+        "unacceptable",
+        "high",
+        "limited",
+        "minimal"
+      ]
+    },
+    "consent_tokens": {
+      "type": "array",
+      "items": {
+        "$ref": "consent-token.schema.json"
+      }
+    },
+    "bias_disclosure": {
+      "type": "object",
+      "properties": {
+        "known_biases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mitigation_applied": {
+          "type": "string"
+        },
+        "residual_risk": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "affected_subgroups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendation": {
+          "type": "string"
+        }
+      }
+    },
+    "human_approval": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "approver_id": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "method": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "approver_id",
+        "approved_at",
+        "method",
+        "signature"
+      ]
+    },
+    "compute_footprint": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "flops_estimated": {
+          "type": "number"
+        },
+        "energy_kwh": {
+          "type": "number"
+        },
+        "carbon_gco2e": {
+          "type": "number"
+        },
+        "datacenter_region": {
+          "type": "string"
+        }
+      }
+    },
+    "synthetic_content": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "is_synthetic": {
+          "type": "boolean"
+        },
+        "generation_method": {
+          "type": "string"
+        },
+        "generating_agent": {
+          "type": "string",
+          "pattern": "^did:ocp:"
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "watermark_id": {
+          "type": "string"
+        },
+        "transformations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "is_synthetic",
+        "generation_method",
+        "generating_agent",
+        "generated_at"
+      ]
+    },
+    "dual_use_assessment": {
+      "type": "string",
+      "enum": [
+        "no_dual_use_concern",
+        "dual_use_aware",
+        "dual_use_restricted"
+      ]
+    },
+    "psychological_profile_consent": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "cognitive_data_classification": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "evl_result": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "REJECT"
+          ]
+        },
+        "checks_performed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "code": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "remediation": {
+          "type": "string"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "status",
+        "checks_performed",
+        "timestamp"
+      ]
+    }
+  }
+}

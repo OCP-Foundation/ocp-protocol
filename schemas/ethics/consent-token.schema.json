@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OCP Consent Token",
+  "description": "Ref: Ethics Bible \u00a711, Appendix D",
+  "type": "object",
+  "required": [
+    "token_id",
+    "scope",
+    "basis",
+    "issued_at",
+    "expires_at",
+    "issuer",
+    "signature"
+  ],
+  "properties": {
+    "token_id": {
+      "type": "string",
+      "pattern": "^ct-"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "basis": {
+      "type": "string",
+      "enum": [
+        "irb_approval",
+        "patient_consent",
+        "parental_consent",
+        "regulatory_mandate",
+        "legitimate_interest",
+        "public_interest",
+        "indigenous_consent",
+        "explicit_individual_consent",
+        "explicit_cognitive_consent"
+      ]
+    },
+    "reference": {
+      "type": "string"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "issuer": {
+      "type": "string",
+      "pattern": "^did:ocp:"
+    },
+    "subject_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "anonymization_method": {
+      "type": "string"
+    },
+    "k_value": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "geographic_scope": {
+      "type": "string"
+    },
+    "revocable": {
+      "type": "boolean",
+      "default": true
+    },
+    "revocation_endpoint": {
+      "type": "string",
+      "format": "uri"
+    },
+    "signature": {
+      "type": "string"
+    }
+  }
+}

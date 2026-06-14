@@ -1,4 +1,4 @@
-"""Shared fixtures for the OCP compliance test suite.
+"""Shared fixtures for the OCP compliance and ethics test suite.
 
 All fixtures are session-scoped where possible to minimize key
 generation overhead. Test-specific fixtures use function scope.
@@ -7,6 +7,7 @@ generation overhead. Test-specific fixtures use function scope.
 from __future__ import annotations
 
 import struct
+import base64
 from typing import Any
 
 import pytest
@@ -15,6 +16,9 @@ from ocp.crypto import SigningKeyPair, EncryptionKeyPair
 from ocp.identity import AgentIdentity
 from ocp.messages import MessageBuilder, MessageType
 from ocp.trust import Bond, BondPermissions, Vouch
+
+# --- ⚖️ Ethics Test Framework Imports ---
+from ocp.ethics import EVL, PUR, EAL
 
 
 # ---- Identity fixtures ----
@@ -117,7 +121,6 @@ def sample_model_delta_payload(identity: AgentIdentity) -> dict[str, Any]:
 @pytest.fixture
 def sample_embedding_payload() -> dict[str, Any]:
     vec = struct.pack("4f", 0.1, 0.2, 0.3, 0.4)
-    import base64
     return {
         "knowledge_type": "embedding",
         "encoding": "float32",
@@ -159,3 +162,23 @@ def sample_vouch(identity: AgentIdentity, peer_identity: AgentIdentity) -> Vouch
         domains=["research", "nlp"],
         signing_keys=identity.signing_keys,
     )
+
+
+# ---- ⚖️ Integrated Ethics Core Fixtures ----
+
+@pytest.fixture
+def ethics_evl() -> EVL:
+    """Provides a fresh instance of the Ethical Validation Layer for test isolation."""
+    return EVL()
+
+
+@pytest.fixture
+def ethics_pur() -> PUR:
+    """Provides a baseline Policy Utility Registry manager."""
+    return PUR()
+
+
+@pytest.fixture
+def ethics_eal() -> EAL:
+    """Provides a fresh Ethics Audit Log engine."""
+    return EAL()
